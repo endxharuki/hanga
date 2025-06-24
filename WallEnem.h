@@ -8,22 +8,22 @@
 class WallEnem : public GameObject
 {
 public:
-	WallEnem(D3DXVECTOR2 pos)
+	WallEnem(D3DXVECTOR2 pos, D3DXVECTOR2 size)
 	{
 		componentPool.Add(new ColiderPool());
 		componentPool.Add(new Enemmy());
 		
-		transform.SetPos(0.0f, MAP_HEIGHT / 2);
-		transform.SetSize(150.0f, MAP_HEIGHT);
+		transform.SetPos(pos);
+		transform.SetSize(size);
 
-		// コリジョンの生成です
+		// コリジョンの生成
 		GetComponent<ColiderPool>()->Add(Colider2D(
 			&transform,
-			D3DXVECTOR2(0.0f, 0.0f),
-			D3DXVECTOR2(140.0f, transform.GetSize().y)
+			D3DXVECTOR2(-size.x * 0.25f, 0.0f),
+			D3DXVECTOR2(size.x * 0.5f, transform.GetSize().y)
 		));
 
-		stateMachine.SceneRegister(Idle, std::make_shared<WallEnemIdle>(Idle, this, pos));
+		stateMachine.SceneRegister(Idle, std::make_shared<WallEnemIdle>(Idle, this));
 	}
 
 	void Start() override

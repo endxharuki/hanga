@@ -6,18 +6,19 @@
 class BulletEnemmy : public GameObject
 {
 public:
-	BulletEnemmy(D3DXVECTOR2 pos)
+	BulletEnemmy(D3DXVECTOR2 pos) : BulletEnemmy(pos, D3DXVECTOR2(100.0f, 100.0f)) {}
+	BulletEnemmy(D3DXVECTOR2 pos, D3DXVECTOR2 size)
 	{
 		componentPool.Add(new ColiderPool());
 		componentPool.Add(new Enemmy());
 		
-		transform.SetSize(100, 100);
+		transform.SetSize(size);
 
 		// ÉRÉäÉWÉáÉìÇÃê∂ê¨
 		GetComponent<ColiderPool>()->Add(Colider2D(
 			&transform,
 			D3DXVECTOR2(0.0f, 0.0f),
-			D3DXVECTOR2(60.0f, transform.GetSize().y)
+			D3DXVECTOR2(size.x * 0.6f, transform.GetSize().y)
 		));
 
 		stateMachine.SceneRegister(Idle, std::make_shared<BulletEnemmyIdle>(Idle, this, pos));

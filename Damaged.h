@@ -3,6 +3,7 @@
 #include "main.h"
 #include "Component.h"
 #include "OnGameData.h"
+#include "sound.h"
 
 class Damaged : public Component
 {
@@ -19,6 +20,8 @@ public:
 	void Damage(int damage)
 	{
 		if (isDamage)return;
+		damageSe = LoadSound((char*)"data/SE/playerdamage.wav");
+		PlaySound(damageSe, 0);
 		for (int i = 0; i < damage; i++)OnGameData::GetInstance()->SubPlayerLife();
 		isDamage = true;
 	}
@@ -28,5 +31,6 @@ public:
 
 private:
 	bool isDamage = false;
+	unsigned int damageSe;
 };
 

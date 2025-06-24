@@ -6,15 +6,15 @@
 #include "DirectWrite.h"
 #include "ColiderPool.h"
 
+#define ONEEYE_TEX_X (5)
+#define ONEEYE_TEX_Y (2)
+
 class OneEyeEnemyIdle : public StateBase
 {
 public:
 
-	OneEyeEnemyIdle(std::string _key,GameObject* _obj,D3DXVECTOR2 pos) 
-		: StateBase(_key),obj(_obj) 
-	{
-		obj->GetTransform()->SetPos(pos);
-	}
+	OneEyeEnemyIdle(std::string _key,GameObject* _obj) 
+		: StateBase(_key),obj(_obj) {}
 	~OneEyeEnemyIdle(){}
 
 	void SetUp() override;
@@ -29,9 +29,14 @@ private:
 	void ColidBlock();
 	void ColidPlayer();
 	void ColidBox();
+	void DeathRendition();
 
 	unsigned int tex[2];
 	int drawMode;
+	D3DXVECTOR4 wUV;
+	int walkTexCount = 0;
+
+	int deathSE;
 
 	bool prevSwap = false;
 
@@ -40,10 +45,15 @@ private:
 	GameObject* obj;
 	ColiderPool* colidPool;
 
+	float startPosY = 0.0f;
+	
+	float dieRot = 0.0f;
+
 	bool deleteRequest = false;
 
 	//à⁄ìÆÇÃêÿÇËë÷Ç¶
 	bool moveSide = true;
+	int hitCount = 0;
 
 	//ínñ îªíË
 	bool isGround = false;

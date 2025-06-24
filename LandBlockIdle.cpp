@@ -13,13 +13,13 @@ void LandBlockIdle::SetUp()
 
 	if (type == 0)
 	{
-		blockTex[0] = LoadTexture((char*)"data/TEXTURE/Dirt1.png");
-		blockTex[1] = LoadTexture((char*)"data/TEXTURE/Dirt2.png");
+		blockTex[0] = LoadTexture((char*)"data/TEXTURE/soil_2.png");
+		blockTex[1] = LoadTexture((char*)"data/TEXTURE/soil_2_R.png");
 	}
 	else
 	{
-		blockTex[0] = LoadTexture((char*)"data/TEXTURE/Grass1.png");
-		blockTex[1] = LoadTexture((char*)"data/TEXTURE/Grass2.png");
+		blockTex[0] = LoadTexture((char*)"data/TEXTURE/grass.png");
+		blockTex[1] = LoadTexture((char*)"data/TEXTURE/grass_R.png");
 	}
 
 	// ƒRƒŠƒWƒ‡ƒ“‚Ì’Ç‰Á

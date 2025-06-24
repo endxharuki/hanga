@@ -6,11 +6,9 @@
 
 #define MAP_HEIGHT (SCREEN_HEIGHT)
 
-#define ONE_SCREEN_RAW (20)		// 一画面中に描画される横のマス数
-#define ONE_SCREEN_COLUMN (20)	// 一画面中に描画される縦のマス数
-#define CHIP_X_SIZE (SCREEN_WIDTH / ONE_SCREEN_RAW)
-#define CHIP_Y_SIZE (SCREEN_HEIGHT / ONE_SCREEN_COLUMN)
-#define MAX_MAP_WIDE (150)
+#define CHIP_X_SIZE (80.0f)
+#define CHIP_Y_SIZE (80.0f)
+#define MAX_LAYER (3)
 
 class BlockMap
 {
@@ -21,9 +19,7 @@ public:
 	void StartMap();
 	void UnInitMap();
 	void UpdateMap();
-	void UpdateMap2();
-	void DrawMap();		// レイヤー一枚目
-	void DrawMap2();	// レイヤー二枚目
+	void DrawMap(int layer);		// レイヤー一枚目
 	void DrawLayer2();
 
 	// とにかく全てのブロックとの衝突判定を行う
@@ -36,9 +32,21 @@ public:
 		Transform2D* setTransform
 		, Colider2D setColid);
 
-	std::list<GameObject*> GetMap() { return map; }
+	std::list<GameObject*> GetMap(int layer) { 
+		if (layer > MAX_LAYER)
+		{
+			std::list<GameObject*> empty;
+			return empty;
+		}
+		return map[layer]; 
+	}
 	std::list<GameObject*> GetMap2() { return map2; }
 	std::list<GameObject*> GetLayer2() { return layer2Map; }
+
+	// x軸にソートされたlistから近くのマップを取得
+	// 当たっているかどうかはまだ判定しない
+	// 計算量を減らすための関数
+	std::list<GameObject*> GetSortedMap(const D3DXVECTOR2& pos, const D3DXVECTOR2& size);
 
 private:
 	BlockMap() {};
@@ -47,7 +55,9 @@ private:
 	D3DXVECTOR2 CalcBlockSize(D3DXVECTOR2 startPos, D3DXVECTOR2 endPos);
 	bool IsCheckedChip(D3DXVECTOR2 current, std::list<D3DXVECTOR2> checkMap);
 
-	std::list<GameObject*> map;
+	std::list<GameObject*> map[MAX_LAYER];
+	std::list<GameObject*> upMap;	// 昇順 x左
+	std::list<GameObject*> downMap;	// 降順 x右
 	std::list<GameObject*> map2;
 	std::list<GameObject*> layer2Map;
 };

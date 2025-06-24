@@ -1,10 +1,8 @@
-// ============================================
-// ƒƒCƒ“§Œä@ƒQ[ƒ€ƒV[ƒ“ [MainInGame.cpp]
-// Author: ¼ŒE “‹g÷	Date: 2023/07/07
+ï»¿// ============================================
+// ãƒ¡ã‚¤ãƒ³åˆ¶å¾¡ã€€ã‚²ãƒ¼ãƒ ã‚·ãƒ¼ãƒ³ [MainInGame.cpp]
+// Author: è¥¿çªª çµ±å‰æ¡œ	Date: 2023/07/07
 // ============================================
 #include "MainInGame.h"
-#include "OnGameData.h"
-#include "PlayerBlockGenerator.h"
 #include "input.h"
 #include "Fade.h"
 #include "UI.h"
@@ -12,10 +10,25 @@
 #include "sprite.h"
 #include "texture.h"
 #include "BlockMap.h"
-ObjectPool MainInGame::objectPool = ObjectPool();
-ObjectPool MainInGame::objectPool2 = ObjectPool();
+#include "Camera.h"
+#include "sound.h"
+#include "XInput.h"
 
-Player* MainInGame::player = new Player();
+#include <chrono>
+// å‡¦ç†é€Ÿåº¦è¨ˆæ¸¬ç”¨
+static std::chrono::high_resolution_clock::time_point start;
+static std::chrono::high_resolution_clock::time_point end;
+
+// font
+static FontData* debugData;
+static DirectWrite* write;
+
+ObjectPool MainInGame::objectPool = ObjectPool();
+Player* MainInGame::player;
+Goal* MainInGame::goal;
+CheckPoint* MainInGame::checkPoint;
+
+EffectManager MainInGame::effectManager;
 
 static int gameBGM;
 
@@ -24,90 +37,232 @@ static int BG[2];
 void MainInGame::SetUp()
 {
 	CleanRequest();
+	StopSoundAll();
 
-	// ƒQ[ƒ€ƒV[ƒ“‹¤—Lƒf[ƒ^‰Šú‰»ˆ—
-	OnGameData::GetInstance()->InitData();
-	OnGameData::GetInstance()->LoadGameTexture();
+	AllControlKey();
+	AllControlPad();
 
-	BG[0] = LoadTexture((char*)"data/TEXTURE/White.png");
-	BG[1] = LoadTexture((char*)"data/TEXTURE/White.png");
+	Camera::GetInstance()->InitCamera();
+	Camera::GetInstance()->SetLeftLimit(0);
+	Camera::GetInstance()->SetPos(D3DXVECTOR2(0.0f, 0.0f));
 
-	// ƒ}ƒbƒv“Çˆ—
-	map->InitMap(OnGameData::GetInstance()->GetStageNum());
+	// ã‚²ãƒ¼ãƒ ã‚·ãƒ¼ãƒ³å…±æœ‰ãƒ‡ãƒ¼ã‚¿åˆæœŸåŒ–å‡¦ç†
+	data->InitData();
+	data->LoadGameTexture();
+	data->SetCtrlUser(true);
+
+	BG[0] = LoadTexture((char*)"data/TEXTURE/yama.png");
+	BG[1] = LoadTexture((char*)"data/TEXTURE/yama_hanten2.png");
+
+	frontMountainTex[0] = LoadTexture((char*)"data/TEXTURE/mountain1.PNG");
+	frontMountainTex[1] = LoadTexture((char*)"data/TEXTURE/mountain1_w.PNG");
+	backMountainTex[0] = LoadTexture((char*)"data/TEXTURE/mountain2.PNG");
+	backMountainTex[1] = LoadTexture((char*)"data/TEXTURE/mountain2_w.PNG");
+
+	frontCloudTex[0] = LoadTexture((char*)"data/TEXTURE/cloud1_re.png");
+	frontCloudTex[1] = LoadTexture((char*)"data/TEXTURE/white.png");
+
+	skyTex[0] = LoadTexture((char*)"data/TEXTURE/sky.PNG");
+	skyTex[1] = LoadTexture((char*)"data/TEXTURE/sky_White.PNG");
+	
+	BGM = LoadSound((char*)"data/BGM/world.wav");
+	SetVolume(BGM, 0.55f);
+
+	// ãƒãƒƒãƒ—èª­è¾¼å‡¦ç†
+	map->InitMap(data->GetStageNum());
 	map->StartMap();
+	effectManager.Clear();
 
-	// ŠeƒIƒuƒWƒFƒNƒg‚Ì‰Šú‰»ˆ—
+	// å„ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®åˆæœŸåŒ–å‡¦ç†
 	objectPool.Start();
-	objectPool2.Start();
 
-	prevHasSwap = OnGameData::GetInstance()->HasSwap();
+	prevHasSwap = data->HasSwap();
 
-	OnGameData::GetInstance()->SetLayerAlpha(1.0f);
+	data->SetLayerAlpha(1.0f);
 
-	//	ƒvƒŒƒCƒ„[‰Šú‰»
+	//	ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼åˆæœŸåŒ–
 	player->Start();
-	OnGameData::GetInstance()->AddPlayerLife();
-	OnGameData::GetInstance()->AddPlayerLife();
-	OnGameData::GetInstance()->AddPlayerLife();
-	OnGameData::GetInstance()->GetStarCoinNum();
+	playerTransform = player->GetTransform();
+
+	if (data->IsCheckPoint() && checkPoint)
+	{
+		playerTransform->SetPos(checkPoint->GetTransform()->GetPos());
+	}
+
+	D3DXVECTOR2 cameraPos = Camera::GetInstance()->GetOriginPos();
+	frontCloudUV = { cameraPos.x / 7000.0f + addCloudU, 1.0f };
+	backMountainUV = { cameraPos.x / 6000.0f, 0.0f };
+	frontMountainUV = { cameraPos.x / 2500.0f, 0.0f };
 
 	UI::GetInstance()->Start();
+
+	// ãƒ•ã‚©ãƒ³ãƒˆè¨­å®š
+	debugData = new FontData();
+	debugData->fontSize = 30;
+	debugData->fontWeight = DWRITE_FONT_WEIGHT_NORMAL;
+	debugData->Color = D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f);
+
+	write = new DirectWrite(debugData);
+	write->Init();
+
+	addCloudU = 0.0f;
+	isFirstClear = false;
+	isFirstGameOver = false;
+
+	PlaySound(BGM, -1);
 }
 
 void MainInGame::CleanUp()
 {
 	map->UnInitMap();
 	objectPool.UnInit();
-	objectPool2.UnInit();
+	effectManager.Clear();
+
+	write->Release();
+	write = NULL;
+	delete debugData;
+
+	delete player;
+
+	StopSound(BGM);
 }
 
 void MainInGame::OnUpdate()
 {
-	if (OnGameData::GetInstance()->GetIsClear())
-	{	// ƒNƒŠƒAó‘Ô‚ÖˆÚs
-		ChangeRequest("Clear");
+	start = std::chrono::high_resolution_clock::now();
+
+	// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚’ã™ã‚‹
+	if (data->IsSwapAnim())
+	{
+		Camera::GetInstance()->SwapAnimationUpdate();
+		return;
 	}
 
-	if (OnGameData::GetInstance()->GetIsGameOver())
+	if (data->IsRetry())
 	{
-		ChangeRequest("GameOver");
+		ChangeRequest("Game");
+		return;
+	}
+	if (data->IsBack())
+	{
+		ChangeRequest("Select");
+		data->SetIsCheckPoint(false);
+		return;
 	}
 
-	if (prevHasSwap != OnGameData::GetInstance()->HasSwap())
+	if (data->IsBackTitle())
 	{
-		drawMode = (drawMode + 1) % 2;
-		prevHasSwap = !prevHasSwap;
+		ChangeRequest("Title");
+		return;
 	}
+
+	if (data->GetIsClear() && !isFirstClear)
+	{
+		NotControlKey(DIK_W);
+		NotControlKey(DIK_A);
+		NotControlKey(DIK_S);
+		NotControlKey(DIK_D);
+		NotControlKey(DIK_DOWN);
+		NotControlKey(DIK_SPACE);
+		NotControlKey(DIK_UP);
+		NotControlKey(DIK_LSHIFT);
+
+		NotControlPad(BUTTON_LEFT);
+		NotControlPad(BUTTON_RIGHT);
+		NotControlPad(BUTTON_B);
+		NotControlPad(BUTTON_X);
+		NotControlPad(BUTTON_Y);
+		NotControlPad(BUTTON_R);
+		if (data->HasSwap()) {
+			// ç‰ˆç”»çŠ¶æ…‹ãªã‚‰ä¸€åº¦ç‰ˆç”»çŠ¶æ…‹ã‚’æŠœã‘ã‚‹
+			data->SetSwapAnim(true);
+			return;
+		}
+
+		ConcurrentMountRequest("GoalResultMount");
+		isFirstClear = true;
+	}
+
+	if (data->GetIsGameOver() && !isFirstGameOver)
+	{
+		MountRequest("GameOverMount");
+		isFirstGameOver = true;
+		return;
+	}
+
+	if (data->IsSwapAnim())return;
 
 	map->UpdateMap();
 
 	objectPool.OnUpdate();
-	if (OnGameData::GetInstance()->GetCurrentLayer() >= 1) objectPool2.OnUpdate();
 
 	player->Update();
 
+	effectManager.OnUpdate();
+
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨ˆç®—
+	addCloudU += 0.0005f;
+
+	D3DXVECTOR2 cameraPos = Camera::GetInstance()->GetOriginPos();
+	frontCloudUV = { cameraPos.x / 7000.0f + addCloudU, 1.0f };
+	backMountainUV = { cameraPos.x / 5000.0f, 0.0f };
+	frontMountainUV = { cameraPos.x / 2500.0f, 0.0f };
+
 	UI::GetInstance()->Update();
+	end = std::chrono::high_resolution_clock::now();
 }
 
 void MainInGame::OnDraw()
 {
-	// ”wŒi•`‰æ
-	DrawSpriteLeftTop(BG[drawMode],
+	drawMode = data->HasSwap() ? 1 : 0;
+
+	// èƒŒæ™¯æç”»
+	DrawSpriteLeftTop(skyTex[drawMode],
 		0.0f, 0.0f,
 		SCREEN_WIDTH, SCREEN_HEIGHT,
 		0.0f, 0.0f,
-		1.0f, 1.0f
-	);
+		1.0f, 1.0f);
 
-	map->DrawMap();
-	if (OnGameData::GetInstance()->GetCurrentLayer() >= 1) map->DrawMap2();
+	DrawSpriteLeftTop(frontCloudTex[drawMode],
+		0.0f, 0.0f,
+		SCREEN_WIDTH, SCREEN_HEIGHT,
+		frontCloudUV.x, frontCloudUV.y,
+		1.0f, 1.0f);
 
-	objectPool.OnDraw();
-	if (OnGameData::GetInstance()->GetCurrentLayer() >= 1) objectPool2.OnDraw();
+	DrawSpriteLeftTop(backMountainTex[drawMode],
+		0.0f, 0.0f,
+		SCREEN_WIDTH, SCREEN_HEIGHT,
+		backMountainUV.x, backMountainUV.y,
+		1.0f, 1.0f);
 
-	player->Draw();
+	DrawSpriteLeftTop(frontMountainTex[drawMode],
+		0.0f, 0.0f,
+		SCREEN_WIDTH, SCREEN_HEIGHT,
+		frontMountainUV.x, frontMountainUV.y,
+		1.0f, 1.0f);
 
-	map->DrawLayer2();
+	// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæç”»
+	if (data->IsObjEnable())
+	{
+		map->DrawMap(0);
 
-	UI::GetInstance()->Draw();
+		effectManager.OnDraw();
+
+		objectPool.OnDraw();
+
+		player->Draw();
+
+		map->DrawMap(1);
+		map->DrawMap(2);
+	}
+
+	if (data->IsSwapAnim() && data->IsSwapAnimStart())
+	{
+		Camera::GetInstance()->SwapAnimationDraw();
+	}
+
+	if (!data->IsSwapAnim())
+	{	// ç‰ˆç”»åˆ‡ã‚Šæ›¿ãˆã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³æ™‚ã«æç”»ã—ãªã„
+		UI::GetInstance()->Draw();
+	}
 }

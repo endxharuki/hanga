@@ -15,13 +15,14 @@ public:
 		// コンポーネントの追加
 		componentPool.Add(new ColiderPool());
 
-		transform.SetPos(pos.x + size.x / 2, pos.y + size.y / 2);
+		transform.SetPos(pos.x, pos.y);
 		transform.SetSize(size);
 
 		GetComponent<ColiderPool>()->Add(Colider2D(
 			&transform,
 			D3DXVECTOR2(0.0f, 0.0f),
-			transform.GetSize()
+			transform.GetSize(),
+			"Coin"
 		));
 
 		stateMachine.SceneRegister(IdleKey, std::make_shared<StarCoinIdle>(IdleKey, this));

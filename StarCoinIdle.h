@@ -28,6 +28,7 @@ private:
 	float moveSign;
 
 	unsigned int blockTex[2];
+	unsigned int se;
 	int drawMode;
 
 	bool prevHasSwap;

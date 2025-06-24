@@ -9,6 +9,10 @@ public:
 	BulletIdle(std::string _key, GameObject* _obj, Bullet** _enemBullet)
 		: StateBase(_key), obj(_obj), enemBullet(_enemBullet) {}
 
+	~BulletIdle() {
+		if (enemBullet != nullptr)*enemBullet = nullptr;
+	}
+
 	void SetUp() override;
 	void CleanUp() override;
 	void OnUpdate() override;
@@ -24,6 +28,8 @@ private:
 	bool deleteRequest = false;
 
 	unsigned int tex[2];
+
+	int breakSE;
 
 	const float eraseDistance = 200.0f;	// Á‹‚³‚ê‚é‚Ü‚Å‚Ì‰æ–Ê˜g‚©‚ç‚Ì‹——£
 

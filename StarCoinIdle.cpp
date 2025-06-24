@@ -7,14 +7,17 @@
 #include "Player.h"
 #include "MainInGame.h"
 #include "OnGameData.h"
+#include "sound.h"
 
 void StarCoinIdle::SetUp()
 {
 	CleanRequest();
 
-	blockTex[0] = LoadTexture((char*)"data/TEXTURE/StarCoin1.png");
-	blockTex[1] = LoadTexture((char*)"data/TEXTURE/StarCoin2.png");
+	blockTex[0] = LoadTexture((char*)"data/TEXTURE/11_Starcoin.png");
+	blockTex[1] = LoadTexture((char*)"data/TEXTURE/11_Starcoin_hanten.png");
 	drawMode = 0;
+
+	se = LoadSound((char*)"data/SE/starcoin.wav");
 
 	transform = obj->GetTransform();
 	colidPool = obj->GetComponent<ColiderPool>();
@@ -63,6 +66,8 @@ void StarCoinIdle::ColidPlayer()
 	{
 		OnGameData::GetInstance()->AddStarCoinNum();
 		MainInGame::objectPool.DeleteRequest(obj);
+
+		PlaySound(se, 0);
 	}
 }
 

@@ -1,8 +1,11 @@
-#pragma once
+ï»¿#pragma once
 
 #include "StateBase.h"
 #include "GameObject.h"
+#include "BlockMap.h"
 #include "Bullet.h"
+
+#define BULLET_ENEMY_SHOT_FRAME (180)
 
 class BulletEnemmyIdle : public StateBase
 {
@@ -20,20 +23,42 @@ public:
 private:
 	bool ColidBullet();
 	void Shot();
+	void DeathRendition();
+	void ColidPlayer();
 
 	unsigned int tex[2];
+	unsigned int idleTex[2];
+	unsigned int attackTex[2];
+	const int idleX = 5;
+	const int idleY = 2;
+	const int attackY = 3;
+	const int attackAll = 11;
+
+	D3DXVECTOR4 uv;
+
+	bool isIdle = false;
+
+	int frameCnt = 0;
+	int shotFrame = 0;
+	int idleFrame = 0;
+
 	int drawMode;
+
+	int shotSE;
 
 	bool prevSwap = false;
 
 	bool isDie = false;
+	float dieRot = 0.0f;
+	float startPosY = 0.0f;
+	int shotFrameCount = 0;
 
 	GameObject* obj;
-	Bullet* bullet = nullptr;	// Œ»İo‚Ä‚¢‚é’e‚ğŠi”[‚·‚é
+	Bullet* bullet = nullptr;	// ç¾åœ¨å‡ºã¦ã„ã‚‹å¼¾ã‚’æ ¼ç´ã™ã‚‹
 
-	// ’e‚Ì”­Ë‚ÉŠÖ‚·‚éƒXƒe[ƒ^ƒX
-	const float shotHeight = 10.0f;	// ’e‚ğƒIƒuƒWƒFƒNƒg‚Ì‚Ç‚Ì‚‚³‚Å”­Ë‚·‚é‚©
-	const D3DXVECTOR2 bulletSize = D3DXVECTOR2(30.0f, 15.0f);
+	// å¼¾ã®ç™ºå°„ã«é–¢ã™ã‚‹ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹
+	const float shotHeight = 10.0f;	// å¼¾ã‚’ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ã©ã®é«˜ã•ã§ç™ºå°„ã™ã‚‹ã‹
+	const D3DXVECTOR2 bulletSize = D3DXVECTOR2(CHIP_X_SIZE, CHIP_Y_SIZE);
 	const D3DXVECTOR2 bulletVel = D3DXVECTOR2(5.0f, 0.0f);
 	float shotDir = -1.0f;
 };

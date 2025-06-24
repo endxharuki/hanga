@@ -10,20 +10,21 @@ class OneEyeEnemy : public GameObject
 {
 public:
 
-	OneEyeEnemy(D3DXVECTOR2 pos) {
+	OneEyeEnemy(D3DXVECTOR2 pos, D3DXVECTOR2 size) {
 
 		componentPool.Add(new ColiderPool());
 
-		transform.SetSize(80, 80);
+		transform.SetPos(pos);
+		transform.SetSize(size);
 
 		// ÉRÉäÉWÉáÉìÇÃê∂ê¨
 		GetComponent<ColiderPool>()->Add(Colider2D(
 			&transform,
 			D3DXVECTOR2(0.0f, 0.0f),
-			D3DXVECTOR2(60.0f, transform.GetSize().y)
+			D3DXVECTOR2(size.x/2, size.y)
 		));
 
-		stateMachine.SceneRegister(Idle, std::make_shared<OneEyeEnemyIdle>(Idle, this, pos));
+		stateMachine.SceneRegister(Idle, std::make_shared<OneEyeEnemyIdle>(Idle, this));
 
 	}
 

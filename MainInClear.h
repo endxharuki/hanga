@@ -1,6 +1,6 @@
-// ###############################################
-// ƒƒCƒ“§Œä@ƒNƒŠƒA [MainGoal.h]
-// Author: ¼ŒE “‹g÷	Date: 2023/07/06
+ï»¿// ###############################################
+// ãƒ¡ã‚¤ãƒ³åˆ¶å¾¡ã€€ã‚¯ãƒªã‚¢ [MainGoal.h]
+// Author: è¥¿çªª çµ±å‰æ¡œ	Date: 2023/07/06
 // ###############################################
 
 #pragma once
@@ -23,17 +23,23 @@ public:
 	void OnDraw() override;
 
 private:
+	void PlayerMove();
 
 	unsigned int BG_tex;
 	unsigned int overBG_tex;
 	unsigned int retryButton_tex;
 	unsigned int returnButton_tex;
 
+	bool isPlayerMove;
+
 
 	D3DXVECTOR2 buttonPos[2];
 	D3DXVECTOR2 buttonSize;
+	D3DXVECTOR2 goalAnimStart;	// ã‚´ãƒ¼ãƒ«ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®é–‹å§‹åœ°ç‚¹
 
 	int currentButtonPos = 0;
+	int frameCnt = 0;
+	int rank = 0;
 };
 
 #endif // !_MAIN_TITLE_H_

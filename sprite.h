@@ -1,6 +1,6 @@
-//=============================================================================
+ï»¿//=============================================================================
 //
-// ƒvƒŒƒCƒ„[ˆ— [sprite.h]
+// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼å‡¦ç† [sprite.h]
 // Author : 
 //
 //=============================================================================
@@ -9,13 +9,13 @@
 #include "main.h"
 
 //*****************************************************************************
-// ƒ}ƒNƒ’è‹`
+// ãƒã‚¯ãƒ­å®šç¾©
 //*****************************************************************************
 
 
 
 //*****************************************************************************
-// ƒvƒƒgƒ^ƒCƒvéŒ¾
+// ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€
 //*****************************************************************************
 void InitSprite();
 void UninitSprite();
@@ -27,4 +27,7 @@ void DrawSpriteColor(int texNo, float X, float Y, float Width, float Height, flo
 void DrawSpriteVtxSetColor(int texNo, D3DXVECTOR2* vtx, float U, float V, float UW, float VH, float r, float g, float b, float a);
 void DrawSpriteColorRotate(int texNo, float X, float Y, float Width, float Height, float U, float V, float UW, float VH, float r, float g, float b, float a, float Rot);
 void DrawSpriteColorRotateAxis(int texNo, float X, float Y, float Width, float Height, float CX, float CY, float U, float V, float UW, float VH, float r, float g, float b, float a, float Rot);
+
+// UIãªã©ã€ç”»é¢å›ºå®šç”¨
+void RectDrawSpriteColor(int texNo, float X, float Y, float Width, float Height, float U, float V, float UW, float VH, float r, float g, float b, float a);
 

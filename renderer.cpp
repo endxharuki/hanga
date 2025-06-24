@@ -13,7 +13,15 @@
 //*********************************************************
 // 構造体
 //*********************************************************
+// 定数バッファ用の構造体
+struct MaskOffsetBuffer
+{
+	D3DXVECTOR2 MaskPos;
+	D3DXVECTOR2 MaskSize;
+};
 
+// 定数バッファ作成
+ID3D11Buffer* g_pMaskOffsetBuffer = nullptr;
 
 //*****************************************************************************
 // グローバル変数:
@@ -29,7 +37,10 @@ ID3D11DepthStencilView* g_DepthStencilView = NULL;
 
 
 ID3D11VertexShader*     g_VertexShader = NULL;
+ID3D11VertexShader* g_VertexMaskShader = NULL;
 ID3D11PixelShader*      g_PixelShader = NULL;
+ID3D11PixelShader* g_PixelShaderPermation = NULL;
+ID3D11PixelShader* g_PixelShaderRed = NULL;
 ID3D11InputLayout*      g_VertexLayout = NULL;
 ID3D11Buffer*			g_ConstantBuffer = NULL;
 ID3D11Buffer*			g_MaterialBuffer = NULL;
@@ -46,6 +57,7 @@ static ID3D11BlendState*		g_BlendStateAlphaBlend;
 static ID3D11BlendState*		g_BlendStateAdd;
 static ID3D11BlendState*		g_BlendStateSubtract;
 static BLEND_MODE				g_BlendStateParam;
+
 
 static ID3D11RasterizerState*	g_RasterStateCullOff;
 static ID3D11RasterizerState*	g_RasterStateCullCW;
@@ -191,6 +203,30 @@ void SetSamplerBorderColor(D3DXCOLOR col)
 	g_BorderColor = col;
 }
 
+void SetVertexShader(int s)
+{
+	if (s == 0)
+	{
+		g_ImmediateContext->VSSetShader(g_VertexShader, NULL, 0);
+	}
+	else
+	{
+		g_ImmediateContext->VSSetShader(g_VertexMaskShader, NULL, 0);
+	}
+}
+
+void SetPixelShader(int s)
+{
+	if (s == 0)
+	{
+		g_ImmediateContext->PSSetShader(g_PixelShader, NULL, 0);
+	}
+	else
+	{
+		g_ImmediateContext->PSSetShader(g_PixelShaderRed, NULL, 0);
+	}
+}
+
 void SetWorldViewProjection2D( void )
 {
 	D3DXMATRIX worldViewProjection;
@@ -245,13 +281,59 @@ void SetViewMatrix( D3DXMATRIX *ViewMatrix )
 
 void SetProjectionMatrix( D3DXMATRIX *ProjectionMatrix )
 {
-	g_ProjectionMatrix = *ProjectionMatrix;
+	D3DXMATRIX projection;
+	projection = *ProjectionMatrix;
+	D3DXMatrixTranspose(&projection, &projection);
 
-	D3DXMATRIX worldViewProjection = g_WorldMatrix * g_ViewMatrix * g_ProjectionMatrix;
-	D3DXMatrixTranspose(&worldViewProjection, &worldViewProjection);
-
-	GetDeviceContext()->UpdateSubresource(g_ConstantBuffer, 0, NULL, &worldViewProjection, 0, 0);
+	GetDeviceContext()->UpdateSubresource(g_ConstantBuffer, 0, NULL, &projection, 0, 0);
 }
+
+void SetMask(D3DXVECTOR2 pos, D3DXVECTOR2 size)
+{
+	MaskOffsetBuffer newData;
+	newData.MaskPos = pos;
+	newData.MaskSize = size;
+
+	// バッファへのデータの書き込み
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	g_ImmediateContext->Map(g_pMaskOffsetBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	memcpy(mappedResource.pData, &newData, sizeof(MaskOffsetBuffer));
+	g_ImmediateContext->Unmap(g_pMaskOffsetBuffer, 0);
+
+	g_ImmediateContext->VSSetConstantBuffers(2, 1, &g_pMaskOffsetBuffer);
+	g_ImmediateContext->PSSetConstantBuffers(2, 1, &g_pMaskOffsetBuffer);
+}
+
+ID3D11ShaderResourceView* GetScreenShot()
+{
+	// バックバッファからの画像取得
+	ID3D11Texture2D* pBackBuffer;
+	g_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&pBackBuffer);
+
+	// スクリーンショット用テクスチャの作成
+	D3D11_TEXTURE2D_DESC desc;
+	pBackBuffer->GetDesc(&desc);
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = 0;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	ID3D11Texture2D* pScreenshotTexture;
+	GetDevice()->CreateTexture2D(&desc, NULL, &pScreenshotTexture);
+
+	// バックバッファの内容をコピー
+	GetDeviceContext()->CopyResource(pScreenshotTexture, pBackBuffer);
+
+	// シェーダーリソースビューの作成
+	ID3D11ShaderResourceView* pShaderResourceView;
+	GetDevice()->CreateShaderResourceView(pScreenshotTexture, NULL, &pShaderResourceView);
+
+	pBackBuffer->Release();
+
+	return pShaderResourceView;
+}
+
 
 
 
@@ -472,8 +554,16 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 	{
 		MessageBox( NULL , (char*)pErrorBlob->GetBufferPointer(), "VS", MB_OK | MB_ICONERROR );
 	}
-
 	g_D3DDevice->CreateVertexShader( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &g_VertexShader );
+
+	hr = D3DX11CompileFromFile("shader.hlsl", NULL, NULL, "VertexShaderMask", "vs_4_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, NULL, &pVSBlob, &pErrorBlob, NULL);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, (char*)pErrorBlob->GetBufferPointer(), "VS", MB_OK | MB_ICONERROR);
+	}
+	g_D3DDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &g_VertexMaskShader);
+
+
 
 	// 入力レイアウト生成
 	D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -503,9 +593,22 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 	}
 
 	g_D3DDevice->CreatePixelShader( pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &g_PixelShader );
-	
 	pPSBlob->Release();
 
+	// mask用生成
+	hr = D3DX11CompileFromFile("shader.hlsl", NULL, NULL, "PixelShaderRedPolygon", "ps_4_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, NULL, &pPSBlob, &pErrorBlob, NULL);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, (char*)pErrorBlob->GetBufferPointer(), "PS", MB_OK | MB_ICONERROR);
+	}
+
+	g_D3DDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &g_PixelShaderRed);
+	pPSBlob->Release();
+
+	// 定数バッファの設定
+	MaskOffsetBuffer initData;
+	initData.MaskPos = {0.0f, 0.0f};
+	initData.MaskSize = { 0.0f, 0.0f };
 
 	// 定数バッファ生成
 	D3D11_BUFFER_DESC hBufferDesc;
@@ -529,6 +632,20 @@ HRESULT InitRenderer(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 
 	g_D3DDevice->CreateBuffer( &hBufferDesc, NULL, &g_MaterialBuffer );
 	g_ImmediateContext->VSSetConstantBuffers( 1, 1, &g_MaterialBuffer );
+
+	// mask用バッファ
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc.ByteWidth = sizeof(MaskOffsetBuffer);
+	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+	D3D11_SUBRESOURCE_DATA initDataDesc = {};
+	initDataDesc.pSysMem = &initData;
+
+	g_D3DDevice->CreateBuffer(&bufferDesc, &initDataDesc, &g_pMaskOffsetBuffer);
+	g_ImmediateContext->VSSetConstantBuffers(2, 1, &g_pMaskOffsetBuffer);
+	g_ImmediateContext->PSSetConstantBuffers(2, 1, &g_pMaskOffsetBuffer);
 
 
 
@@ -596,6 +713,77 @@ void Present(void)
 {
 	g_SwapChain->Present( 0, 0 );
 	int a = 0;
+}
+
+
+void SplitTexture(ID3D11ShaderResourceView* inputSRV, ID3D11ShaderResourceView** R_outputSRV, ID3D11ShaderResourceView** L_outputSRV) 
+{
+	// 元のテクスチャの情報を取得
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	inputSRV->GetDesc(&srvDesc);
+
+	// テクスチャの幅と高さを取得
+	ID3D11Resource* resource;
+	inputSRV->GetResource(&resource);
+	ID3D11Texture2D* texture;
+	resource->QueryInterface(&texture);
+	D3D11_TEXTURE2D_DESC texDesc;
+	texture->GetDesc(&texDesc);
+	UINT originalWidth = texDesc.Width;
+	UINT originalHeight = texDesc.Height;
+
+	// 新しいテクスチャの幅と高さを計算（縦に半分に分割）
+	UINT newWidth = originalWidth * 0.5f;
+	UINT newHeight = originalHeight;
+
+	// 新しいテクスチャのデータを作成
+	D3D11_TEXTURE2D_DESC newTexDesc;
+	newTexDesc.Width = newWidth;
+	newTexDesc.Height = newHeight;
+	newTexDesc.MipLevels = texDesc.MipLevels;
+	newTexDesc.ArraySize = texDesc.ArraySize;
+	newTexDesc.Format = texDesc.Format;
+	newTexDesc.SampleDesc = texDesc.SampleDesc;
+	newTexDesc.Usage = D3D11_USAGE_DEFAULT;
+	newTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	newTexDesc.CPUAccessFlags = 0;
+	newTexDesc.MiscFlags = 0;
+
+	D3D11_BOX sourceRegionLeft;
+	sourceRegionLeft.left = 0;
+	sourceRegionLeft.right = newTexDesc.Width;
+	sourceRegionLeft.top = 0; 
+	sourceRegionLeft.bottom = newTexDesc.Height;
+	sourceRegionLeft.front = 0;
+	sourceRegionLeft.back = 1;
+
+	D3D11_BOX sourceRegionRight;
+	sourceRegionRight.left = newTexDesc.Width;
+	sourceRegionRight.right = originalWidth;
+	sourceRegionRight.top = 0;
+	sourceRegionRight.bottom = newTexDesc.Height;
+	sourceRegionRight.front = 0;
+	sourceRegionRight.back = 1;
+
+
+	// 新しいテクスチャを作成
+	ID3D11Texture2D* newTextureLeft = nullptr;
+	ID3D11Texture2D* newTextureRight = nullptr;
+	GetDevice()->CreateTexture2D(&newTexDesc, nullptr, &newTextureLeft);
+	GetDevice()->CreateTexture2D(&newTexDesc, nullptr, &newTextureRight);
+
+	// 元のテクスチャから新しいテクスチャへデータをコピー（左半分）
+	GetDeviceContext()->CopySubresourceRegion(newTextureLeft, 0, 0, 0, 0, texture, 0, &sourceRegionLeft);
+	// 元のテクスチャから新しいテクスチャへデータをコピー（右半分）
+	GetDeviceContext()->CopySubresourceRegion(newTextureRight, 0, 0, 0, 0, texture, 0, &sourceRegionRight);
+
+	GetDevice()->CreateShaderResourceView(newTextureLeft, &srvDesc, L_outputSRV);
+	GetDevice()->CreateShaderResourceView(newTextureRight, &srvDesc, R_outputSRV);
+
+
+	// リソースの解放
+	texture->Release();
+	resource->Release();
 }
 
 

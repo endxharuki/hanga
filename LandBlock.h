@@ -14,7 +14,7 @@ public:
 	LandBlock(D3DXVECTOR2 pos, D3DXVECTOR2 size, int type)
 	{
 		// 左上座標から中心座標を格納
-		transform.SetPos(pos.x + size.x / 2, pos.y + size.y / 2);
+		transform.SetPos(pos.x, pos.y);
 		transform.SetSize(size);
 
 		// コンポーネントの追加

@@ -1,6 +1,6 @@
-// ============================================
-// ƒƒCƒ“§Œä@ƒNƒŠƒA [Main.Title.cpp]
-// Author: ¼ŒE “‹g÷	Date: 2023/07/07
+ï»¿// ============================================
+// ãƒ¡ã‚¤ãƒ³åˆ¶å¾¡ã€€ã‚¯ãƒªã‚¢ [Main.Title.cpp]
+// Author: è¥¿çªª çµ±å‰æ¡œ	Date: 2023/07/07
 // ============================================
 #include "MainInClear.h"
 #include "Fade.h"
@@ -26,6 +26,8 @@ void MainClear::SetUp()
 
 	clearWrite = new DirectWrite(clearData);
 	clearWrite->Init();
+
+	rank = OnGameData::GetInstance()->GetStarCoinNum();
 }
 
 void MainClear::CleanUp()
@@ -38,13 +40,9 @@ void MainClear::CleanUp()
 
 void MainClear::OnUpdate()
 {
-	if (IsButtonTriggered(0, BUTTON_A))
+	if (IsButtonTriggered(0, BUTTON_B) || GetKeyboardPress(DIK_B))
 	{
-		ChangeRequest("Game");
-	}
-	if (IsButtonTriggered(0, BUTTON_B))
-	{
-		ChangeRequest("Title");
+		ChangeRequest("Select");
 	}
 }
 
@@ -53,14 +51,57 @@ void MainClear::OnDraw()
 	clearData->Color = D2D1::ColorF(1.0f, 1.0f, 0.0f, 1.0f);
 	clearData->fontSize = 150;
 	clearWrite->SetFont(clearData);
-	clearWrite->DrawString("ƒQ[ƒ€ƒNƒŠƒAI", D3DXVECTOR2(600.0f, 400), D2D1_DRAW_TEXT_OPTIONS_NONE);
+	clearWrite->DrawString("ã‚²ãƒ¼ãƒ ã‚¯ãƒªã‚¢ï¼", D3DXVECTOR2(700.0f, 200), D2D1_DRAW_TEXT_OPTIONS_NONE);
+	
+	//{//ãƒ©ãƒ³ã‚¯ã‚·ã‚¹ãƒ†ãƒ ï¼ˆä»Šã¯ã‚¹ã‚¿ãƒ¼ã‚³ã‚¤ãƒ³ç²å¾—æšæ•°ï¼‰
+	//	clearData->Color = D2D1::ColorF(0.7f, 0.3f, 0.0f, 1.0f);
+	//	clearData->fontSize = 150;
+	//	clearWrite->SetFont(clearData);
+	//	clearWrite->DrawString("ã‚¯ãƒªã‚¢ãƒ©ãƒ³ã‚¯", D3DXVECTOR2(720.0f, 400), D2D1_DRAW_TEXT_OPTIONS_NONE);
 
+	//	if (rank == 3) {
+	//		clearData->Color = D2D1::ColorF(1.0f, 1.0f, 0.0f, 1.0f);
+	//		clearData->fontSize = 150;
+	//		clearWrite->SetFont(clearData);
+	//		clearWrite->DrawString("S", D3DXVECTOR2(960.0f, 600), D2D1_DRAW_TEXT_OPTIONS_NONE);
+
+	//	}
+
+	//	if (rank == 2) {
+	//		clearData->Color = D2D1::ColorF(1.0f, 0.0f, 0.0f, 1.0f);
+	//		clearData->fontSize = 150;
+	//		clearWrite->SetFont(clearData);
+	//		clearWrite->DrawString("A", D3DXVECTOR2(960.0f, 600), D2D1_DRAW_TEXT_OPTIONS_NONE);
+
+	//	}
+
+	//	if (rank == 1) {
+	//		clearData->Color = D2D1::ColorF(0.0f, 1.0f, 0.0f, 1.0f);
+	//		clearData->fontSize = 150;
+	//		clearWrite->SetFont(clearData);
+	//		clearWrite->DrawString("B", D3DXVECTOR2(960.0f, 600), D2D1_DRAW_TEXT_OPTIONS_NONE);
+
+	//	}
+
+	//	if (rank == 0) {
+	//		clearData->Color = D2D1::ColorF(0.7f, 0.3f, 0.0f, 1.0f);
+	//		clearData->fontSize = 150;
+	//		clearWrite->SetFont(clearData);
+	//		clearWrite->DrawString("C", D3DXVECTOR2(960.0f, 600), D2D1_DRAW_TEXT_OPTIONS_NONE);
+
+	//	}
+	//}
 	clearData->Color = D2D1::ColorF(0.7f, 0.3f, 0.0f, 1.0f);
 	clearData->fontSize = 60;
 	clearWrite->SetFont(clearData);
-	clearWrite->DrawString("B‚ğ‰Ÿ‚µ‚Äƒ^ƒCƒgƒ‹‚Ö", D3DXVECTOR2(750.0f, 600), D2D1_DRAW_TEXT_OPTIONS_NONE);
+	clearWrite->DrawString("Bã‚’æŠ¼ã—ã¦ã‚¿ã‚¤ãƒˆãƒ«ã¸", D3DXVECTOR2(750.0f, 1000), D2D1_DRAW_TEXT_OPTIONS_NONE);
 
-	clearData->Color = D2D1::ColorF(0.7f, 0.3f, 0.0f, 1.0f);
-	clearWrite->SetFont(clearData);
-	clearWrite->DrawString("A‚ğ‰Ÿ‚µ‚ÄŸ‚ÌƒXƒe[ƒW‚Ö", D3DXVECTOR2(750.0f, 700), D2D1_DRAW_TEXT_OPTIONS_NONE);
+	//clearData->Color = D2D1::ColorF(0.7f, 0.3f, 0.0f, 1.0f);
+	//clearWrite->SetFont(clearData);
+	//clearWrite->DrawString("Aã‚’æŠ¼ã—ã¦æ¬¡ã®ã‚¹ãƒ†ãƒ¼ã‚¸ã¸", D3DXVECTOR2(750.0f, 700), D2D1_DRAW_TEXT_OPTIONS_NONE);
+}
+
+void MainClear::PlayerMove()
+{
+
 }

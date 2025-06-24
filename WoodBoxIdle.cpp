@@ -12,8 +12,8 @@ void WoodBoxIdle::SetUp()
 {
 	CleanRequest();
 
-	blockTex[0] = LoadTexture((char*)"data/TEXTURE/BoxWood.png");
-	blockTex[1] = LoadTexture((char*)"data/TEXTURE/Box2.png");
+	blockTex[0] = LoadTexture((char*)"data/TEXTURE/13_kibako.png");
+	blockTex[1] = LoadTexture((char*)"data/TEXTURE/13_kibako_hanten.png");
 	drawMode = 0;
 
 	transform = obj->GetTransform();
@@ -37,12 +37,15 @@ void WoodBoxIdle::OnUpdate()
 
 
 	D3DXVECTOR2 pos = transform->GetPos();
+	D3DXVECTOR2 playerPos = MainInGame::player->GetTransform()->GetPos();
+	if (fabsf(playerPos.x - pos.x) > 3000.0f)return;
 
 	// d—Í
 	transform->SetPos(pos.x, pos.y + 10.0f);
 
 	BlockMap::GetInstance()->ColidAllBlock(transform, colidPool->GetColider()[0]);
 	ColidBox();
+	ColidPlayer();
 
 	colidPool->GetColider()[0].SetPrevPos(obj->GetTransform()->GetPos());
 	colidPool->GetColider()[0].SetFriction(false);
@@ -138,5 +141,38 @@ void WoodBoxIdle::ColidPush(GameObject* target, Pushed* pushed)
 	}
 }
 
+void WoodBoxIdle::ColidPlayer()
+{
+	Player* player = MainInGame::player;
 
+	Colider2D colid = obj->GetComponent<ColiderPool>()->GetColider()[0];
+	D3DXVECTOR2 pos = colid.GetPos();
+	D3DXVECTOR2 size = colid.GetSize();
+	Colider2D playerColid = player->GetComponent<ColiderPool>()->GetColider()[0];
+	D3DXVECTOR2 playerPos = player->GetTransform()->GetPos();
+	D3DXVECTOR2 playerSize = player->GetTransform()->GetSize();
+	playerSize.x = playerColid.GetSize().x;
+	ColidDir dir = colid.IsDirColid(playerColid);
 
+	dir = colid.IsDirColid(playerColid);
+
+	if (dir == UP)
+	{
+		player->SetGround();
+		player->GetTransform()->SetVel(player->GetTransform()->GetVel().x, 0.0f);
+		player->GetTransform()->SetPos(playerPos.x, pos.y - size.y * 0.5f - playerSize.y * 0.5f);
+	}
+	if (dir == DOWN)
+	{
+		player->GetTransform()->SetPos(playerPos.x, pos.y + size.y * 0.5f + playerSize.y * 0.5f);
+	}
+	if (dir == LEFT)
+	{
+		player->GetTransform()->SetPos(pos.x - size.x * 0.5f - playerSize.x * 0.5f, playerPos.y);
+	}
+	if (dir == RIGHT)
+	{
+		player->GetTransform()->SetPos(pos.x + size.x * 0.5f + playerSize.x * 0.5f, playerPos.y);
+	}
+
+}

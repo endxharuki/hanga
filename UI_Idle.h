@@ -2,6 +2,7 @@
 
 #include "StateBase.h"
 #include "GameObject.h"
+#include "DirectWrite.h"
 
 class UI_Idle: public StateBase
 {
@@ -19,10 +20,13 @@ private:
 	GameObject* obj;
 
 	unsigned int topBG_Tex;
-	unsigned int Life[2];
+	unsigned int Life[4];
 	unsigned int StarCoinTex[2];
+	unsigned int ScoreTex;
+	unsigned int CoinTex;
+	unsigned int MulTex;
 
-	int life;
-
+	FontData* font;
+	DirectWrite* write;
 };
 

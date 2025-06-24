@@ -14,7 +14,7 @@ public:
 	ThornBlock(D3DXVECTOR2 pos, D3DXVECTOR2 size)
 	{
 		// 左上座標から中心座標を格納
-		transform.SetPos(pos.x + size.x / 2, pos.y + size.y / 2);
+		transform.SetPos(pos.x, pos.y);
 		transform.SetSize(size);
 
 		// コンポーネントの追加
@@ -32,7 +32,7 @@ public:
 		GetComponent<ColiderPool>()->Add(
 			Colider2D(&transform,
 				D3DXVECTOR2(0.0f, 15.0f),
-				D3DXVECTOR2(transform.GetSize().x, transform.GetSize().y),
+				D3DXVECTOR2(transform.GetSize().x, transform.GetSize().y * 0.8f),
 				"Damage")
 		);
 

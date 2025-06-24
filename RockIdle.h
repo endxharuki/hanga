@@ -2,6 +2,7 @@
 #include "StateBase.h"
 #include "GameObject.h"
 #include "ColiderPool.h"
+#include "sound.h"
 
 class Rock;
 class RockIdle :  public StateBase
@@ -11,6 +12,7 @@ public:
 		: StateBase(_key), obj(_obj), enemRock(_enemRock) {}
 	~RockIdle() {
 		if(enemRock) *enemRock = nullptr;
+		StopSound(se);
 	}
 
 	void SetUp() override;
@@ -28,6 +30,7 @@ private:
 	ColiderPool* pool;
 
 	unsigned int tex[2];
+	unsigned int se;
 
 	const float eraseDistance = 400.0f;	// Á‹‚³‚ê‚é‚Ü‚Å‚Ì‰æ–Ê˜g‚©‚ç‚Ì‹——£
 

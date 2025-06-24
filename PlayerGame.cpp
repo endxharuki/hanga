@@ -1,4 +1,4 @@
-#include "PlayerGame.h"
+Ôªø#include "PlayerGame.h"
 #include "main.h"
 #include "texture.h"
 #include "sprite.h"
@@ -11,16 +11,22 @@
 #include "ObjectPool.h"
 #include "Pushed.h"
 #include "Input.h"
+#include "sound.h"
+#include "EffectManager.h"
 
 
 #define PLAYER_TEX_X (5)
-#define PLAYER_TEX_Y (6)
-#define PLAYER_PUSH (4.0f)
+#define PLAYER_TEX_Y (2)
+#define PLAYER_PUSH (2.7f)
 
 #define PI (3.1415f)
 
-// ÉOÉçÅ[ÉoÉãïœêî
+// „Ç∞„É≠„Éº„Éê„É´Â§âÊï∞
 OnGameData*		g_GameData = OnGameData::GetInstance();
+
+// Âá¶ÁêÜÈÄüÂ∫¶Ë®àÊ∏¨Áî®
+static std::chrono::high_resolution_clock::time_point start;
+static std::chrono::high_resolution_clock::time_point end;
 
 static int outSound;
 
@@ -40,15 +46,42 @@ void PlayerGame::SetUp()
 {
 	CleanRequest();
 
-	// ÉeÉNÉXÉ`ÉÉì«çû
-	idleTex[0] = LoadTexture((char*)"data/TEXTURE/PIdle1.png");
-	idleTex[1] = LoadTexture((char*)"data/TEXTURE/PIdle2.png");
-	runTex[0] = LoadTexture((char*)"data/TEXTURE/PWalk1.png");
-	runTex[1] = LoadTexture((char*)"data/TEXTURE/PWalk2.png");
+	// „ÉÜ„ÇØ„Çπ„ÉÅ„É£Ë™≠Ëæº
+	idleTex[0] = LoadTexture((char*)"data/TEXTURE/PLAYER/idle.png");
+	idleTex[1] = LoadTexture((char*)"data/TEXTURE/PLAYER/idle_R.png");
+	walkTex[0] = LoadTexture((char*)"data/TEXTURE/PLAYER/walk.png");
+	walkTex[1] = LoadTexture((char*)"data/TEXTURE/PLAYER/walk_R.png");
+	runTex[0] = LoadTexture((char*)"data/TEXTURE/PLAYER/run.png");
+	runTex[1] = LoadTexture((char*)"data/TEXTURE/PLAYER/run_R.png");
+	jumpTex[0] = LoadTexture((char*)"data/TEXTURE/PLAYER/jump2.png");
+	jumpTex[1] = LoadTexture((char*)"data/TEXTURE/PLAYER/jump2_R.png");
+	pushTex[0] = LoadTexture((char*)"data/TEXTURE/PLAYER/push.png");
+	pushTex[1] = LoadTexture((char*)"data/TEXTURE/PLAYER/push_R.png");
+	
+	JumpSand[0] = LoadTexture((char*)"data/TEXTURE/PLAYER/sunabokori_5.png");
+	JumpSand[1] = LoadTexture((char*)"data/TEXTURE/PLAYER/sunabokori_5_R.png");
+
+	dashSand[0] = LoadTexture((char*)"data/TEXTURE/PLAYER/sunabokori_3.png");
+	dashSand[1] = LoadTexture((char*)"data/TEXTURE/PLAYER/sunabokori_3_R.png");
+
+	X_buttonTex = LoadTexture((char*)"data/TEXTURE/Button_X.png");
+
+	// ÂÖà„Å´Ë™≠„ÅøËæº„Çì„Åß„Åä„Åè
+	LoadTexture((char*)"data/TEXTURE/GOAL/goal_motion.png");
+
+	jumpSe = LoadSound((char*)"data/SE/jump.wav");
+	SetVolume(jumpSe, 0.75f);
+
+	currentWalkTex = 0;
+	currentIdleTex = 0;
+	currentIdleTex = 0;
+	currentJumpTex = 0;
+
+	circleTex = LoadTexture((char*)"data/TEXTURE/playerCircle.jpg");
+
+	drawMode = g_GameData->HasSwap() ? 1 : 0;
 
 
-	obj->GetTransform()->SetSize(100 , 100);
-	obj->GetTransform()->SetPos(200.0f, 800.0f);
 	obj->GetTransform()->SetGravity(9.0f);
 	obj->GetTransform()->SetRotation(0.0f);
 	obj->GetTransform()->SetRotationVel(0.0f);
@@ -61,17 +94,24 @@ void PlayerGame::SetUp()
 	prevHasSwap = g_GameData->HasSwap();
 	isGround = false;
 	isRun = false;
+	isWalk = false;
+	isIdle = true;
 	isJump = false;
+	inPush = false;
 	pushJumpKey = false;
 	pushGrabKey = false;
 	drawPlayer = true;
 	moveDir = 1.0f;
+	moveSign = 1.0f;
+
+	mapRightLimit = Camera::GetInstance()->GetRightLimit();
 
 	isDie = false;
 
 	currentJumpFrame = 0;
+	frameCnt = 0;
 
-	// ÉtÉHÉìÉgê›íË
+	// „Éï„Ç©„É≥„ÉàË®≠ÂÆö
 	debugData = new FontData();
 	debugData->fontSize = 30;
 	debugData->fontWeight = DWRITE_FONT_WEIGHT_NORMAL;
@@ -97,64 +137,137 @@ void PlayerGame::OnUpdate()
 	Transform2D* transform = obj->GetTransform();
 	transform->SetVel(transform->GetVel().x, transform->GetVel().y + transform->GetGravity());
 
+	start = std::chrono::high_resolution_clock::now();
+
+	++frameCnt;
+	if (frameCnt > 30000)frameCnt = 0;
 
 	// ================
-	// äeéÌîªíË
+	// ÂêÑÁ®ÆÂà§ÂÆö
 	// ================
-	// îΩì]ÇµÇΩç€ÇÃèàóù
+	// ÂèçËª¢„Åó„ÅüÈöõ„ÅÆÂá¶ÁêÜ
 	if (prevHasSwap != g_GameData->HasSwap())
 	{
 		prevHasSwap = !prevHasSwap;
 		drawMode = (drawMode + 1) % 2;
 
-		// ìÒòAë±Ç≈îΩì]ÇµÇΩÇ∆Ç´Ç…à⁄ìÆÇ™îΩì]ÇµÇΩÇ‹Ç‹Ç…Ç»ÇÁÇ»Ç¢ÇÊÇ§Ç…ïœêîé©ëÃÇÃî€íËÇï‘Ç∑
-		requestInputSwap = !requestInputSwap;	
+		moveSign *= -1.0f;
 
 		transform->SetVel(-transform->GetVel().x, transform->GetVel().y);
 		transform->SetOutVel(-transform->GetOutVel().x, transform->GetOutVel().y);
 	}
 
-	// îΩì]ÇµÇΩå„ÅAà⁄ìÆì¸óÕÇ™Ç»Ç¢èÍçáÇ…à⁄ìÆÇÃílÇ‡îΩì]Ç≥ÇπÇÈ
-	if (requestInputSwap && prevInput == false && isGround)
-	{
-		moveSign *= -1.0f;
-		requestInputSwap = false;
-	}
-	else if (requestInputSwap && prevInput == true && !isGround)
-	{
-		moveSign *= -1.0f;
-		requestInputSwap = false;
-	}
-
-	// ÉvÉåÉCÉÑÅ[éÂëÃÇÃë¨ìxÇÃëÂÇ´Ç≥Ç™1.0à»è„Ç»ÇÁìÆÇ¢ÇƒÇ¢ÇÈÇ∆Ç›Ç»Ç∑
-	if (fabsf(transform->GetVel().x) >= 1.0f)
+	// „Éó„É¨„Ç§„É§„Éº‰∏ª‰Ωì„ÅÆÈÄüÂ∫¶„ÅÆÂ§ß„Åç„Åï„Åå4.0‰ª•‰∏ä„Å™„ÇâËµ∞„Å£„Å¶„ÅÑ„Çã„Å®„Åø„Å™„Åô
+	if (fabsf(transform->GetVel().x) >= 4.0f)
 	{
 		isRun = true;
+		isWalk = false;
+		isIdle = false;
+	}
+	else if (fabsf(transform->GetVel().x) >= 1.0f)// „Éó„É¨„Ç§„É§„Éº‰∏ª‰Ωì„ÅÆÈÄüÂ∫¶„ÅÆÂ§ß„Åç„Åï„Åå1.0‰ª•‰∏ä„Å™„ÇâÂãï„ÅÑ„Å¶„ÅÑ„Çã„Å®„Åø„Å™„Åô
+	{
+		isWalk = true;
+		isRun = false;
+		isIdle = false;
 	}
 	else
 	{
+		isIdle = true;
+		isWalk = false;
 		isRun = false;
 	}
 
 
-	// ëñÇËÉAÉjÉÅÅ[ÉVÉáÉìèàóù
+	// Ëµ∞„Çä„Ç¢„Éã„É°„Éº„Ç∑„Éß„É≥Âá¶ÁêÜ
 	if (isRun)
 	{
-		rU = (currentRunTex % PLAYER_TEX_X) * (1.0f / PLAYER_TEX_X);
-		rV = (currentRunTex / PLAYER_TEX_X) * (1.0f / PLAYER_TEX_Y);
-		rUW = 1.0f / PLAYER_TEX_X;
+		rU = (currentRunTex % (PLAYER_TEX_X)) * (1.0f / (PLAYER_TEX_X));
+		rV = (currentRunTex / (PLAYER_TEX_X)) * (1.0f / PLAYER_TEX_Y);
+		rUW = 1.0f / (PLAYER_TEX_X);
 		rVH = 1.0f / PLAYER_TEX_Y;
 
-		currentRunTex++;
+		if (frameCnt % 3 == 0)++currentRunTex;
+		if (currentRunTex >= 8)currentRunTex = 0;
+
+		// „Åô„Å™„Åº„Åì„Çä
+		++dashCnt;
+		if (dashCnt % 6 == 0 && isGround)
+		{
+			EffectObj sand;
+			sand.allFrame = 15;
+			sand.tex[0] = dashSand[0];
+			sand.tex[1] = dashSand[1];
+			sand.pos = { transform->GetPos().x + (-moveDir * 55.0f), transform->GetPos().y + 70.0f };
+			sand.size = { 40.0f, 40.0f };
+			MainInGame::effectManager.AlphaAdd(sand);
+		}
 	}
 	else
 	{
 		currentRunTex = 0;
+		dashCnt = 0;
+	}
+	// Ê≠©„Åç„Ç¢„Éã„É°„Éº„Ç∑„Éß„É≥Âá¶ÁêÜ
+	if (isWalk)
+	{
+		currentWalkTex = frameCnt / 3;
+
+		wUV.x = (currentWalkTex % PLAYER_TEX_X) * (1.0f / PLAYER_TEX_X);
+		wUV.y = (currentWalkTex / PLAYER_TEX_X) * (1.0f / PLAYER_TEX_Y);
+		wUV.z = 1.0f / PLAYER_TEX_X;
+		wUV.w = 1.0f / PLAYER_TEX_Y;
+	}
+	else
+	{
+		currentWalkTex = 0;
+	}
+	// ÂæÖÊ©ü„Ç¢„Éã„É°„Éº„Ç∑„Éß„É≥Âá¶ÁêÜ
+	if (isIdle)
+	{
+		currentIdleTex = frameCnt / 3;
+
+		iUV.x = (currentIdleTex % PLAYER_TEX_X) * (1.0f / PLAYER_TEX_X);
+		iUV.y = (currentIdleTex / PLAYER_TEX_X) * (1.0f / PLAYER_TEX_Y);
+		iUV.z = 1.0f / PLAYER_TEX_X;
+		iUV.w = 1.0f / PLAYER_TEX_Y;
+	}
+	else
+	{
+		currentIdleTex = 0;
+	}
+	// „Ç∏„É£„É≥„Éó„Ç¢„Éã„É°„Éº„Ç∑„Éß„É≥Âá¶ÁêÜ
+	if (isJump)
+	{
+		currentJumpTex = frameCnt / 3;
+
+		jUV.x = (currentJumpTex % PLAYER_TEX_X) * (1.0f / PLAYER_TEX_X);
+		jUV.y = (currentJumpTex / PLAYER_TEX_X) * (1.0f / PLAYER_TEX_Y);
+		jUV.z = 1.0f / PLAYER_TEX_X;
+		jUV.w = 1.0f / PLAYER_TEX_Y;
+	}
+	else
+	{
+		currentJumpTex = 0;
 	}
 
-	// É_ÉÅÅ[ÉWóp
+	if (isGrab)
+	{
+		currentPushTex = frameCnt / 3;
+
+		pUV.x = (currentPushTex % PLAYER_TEX_X) * (1.0f / PLAYER_TEX_X);
+		pUV.y = (currentPushTex / PLAYER_TEX_X) * (1.0f / PLAYER_TEX_Y);
+		pUV.z = 1.0f / PLAYER_TEX_X;
+		pUV.w = 1.0f / PLAYER_TEX_Y;
+	}
+	else
+	{
+		currentPushTex = 0;
+	}
+
+
+	// „ÉÄ„É°„Éº„Ç∏Áî®
 	if (prevDamage == false && damage->IsDamage() == true)
-	{	// É_ÉÅÅ[ÉWÇéÛÇØÇΩèuä‘
+	{	// „ÉÄ„É°„Éº„Ç∏„ÇíÂèó„Åë„ÅüÁû¨Èñì
 
 		std::chrono::system_clock::time_point p = std::chrono::system_clock::now();
 		firstSec = std::chrono::duration_cast<std::chrono::milliseconds>(p.time_since_epoch());
@@ -190,47 +303,12 @@ void PlayerGame::OnUpdate()
 	}
 
 	// ================
-	// ì¸óÕèàóù
+	// ÂÖ•ÂäõÂá¶ÁêÜ
 	// ================
 	prevInput = false;
+	notCtrl = !OnGameData::GetInstance()->IsCtrlUser();
 
-	// ÉåÉCÉÑÅ[ëÄçÏ
-	if (GetKeyboardPress(DIK_LEFT) || IsSwitchTriggerd(0, BUTTON_DOWN))
-	{
-		if (g_GameData->GetCurrentLayer() - 1 >= 0) g_GameData->SubLayer();
-	}
-	if (GetKeyboardPress(DIK_RIGHT) || IsSwitchTriggerd(0, BUTTON_UP))
-	{
-		if (g_GameData->GetCurrentLayer() + 1 <= 1) g_GameData->AddLayer();
-	}
-
-	// à⁄ìÆèàóù
-	if (GetKeyboardPress(DIK_A) || GetLeftStick(0).x < 0.0f)
-	{// ç∂
-		if (!isGrab)
-		{
-			transform->SetVel(transform->GetVel().x - 5.0f * moveSign, transform->GetVel().y);
-		}
-		prevInput = true;
-		moveDir = -1.0f * moveSign;
-	}
-	if (GetKeyboardPress(DIK_D) || GetLeftStick(0).x > 0.0f)
-	{// âE
-		if (!isGrab)
-		{
-			transform->SetVel(transform->GetVel().x + 5.0f * moveSign, transform->GetVel().y);
-		}
-		prevInput = true;
-		moveDir = 1.0f * moveSign;
-	}
-
-	// âÒì]èàóù
-	if (GetKeyboardPress(DIK_RIGHT))
-		transform->SetRotation(transform->GetRotation() - 0.05f);
-	if(GetKeyboardPress(DIK_LEFT))
-		transform->SetRotation(transform->GetRotation() + 0.05f);
-
-	// ÉWÉÉÉìÉvì¸óÕ
+	// „Ç∏„É£„É≥„ÉóÂÖ•Âäõ
 	if (isGround && (GetKeyboardTrigger(DIK_SPACE) || IsButtonTriggered(0, BUTTON_X)))
 	{
 		pushJumpKey = true;
@@ -254,20 +332,37 @@ void PlayerGame::OnUpdate()
 	}
 		
 
-	// î≈âÊ
-	if (GetKeyboardTrigger(DIK_DOWN) || IsButtonTriggered(0, BUTTON_R)) // îΩì]
-		OnGameData::GetInstance()->ChangeSwap();
+	// ÁâàÁîª
+	if (GetKeyboardTrigger(DIK_DOWN) || IsButtonTriggered(0, BUTTON_R)) // ÂèçËª¢
+	{
+		g_GameData->SetSwapAnim(true);
+		return;
+	}
+
+	if (GetKeyboardPress(DIK_O))
+	{
+		D3DXVECTOR2 zoom = Camera::GetInstance()->GetZoom();
+		Camera::GetInstance()->SetZoom(zoom.x + 0.01f, zoom.y + 0.01f);
+	}
+	else if (GetKeyboardPress(DIK_P))
+	{
+		D3DXVECTOR2 zoom = Camera::GetInstance()->GetZoom();
+		Camera::GetInstance()->SetZoom(zoom.x - 0.01f, zoom.y - 0.01f);
+	}
 
 
-	// ÉWÉÉÉìÉvèàóù
+	// ÁßªÂãïÂá¶ÁêÜ
+	Move();
+
+	// „Ç∏„É£„É≥„ÉóÂá¶ÁêÜ
 	Jump();
 
 	// ================
-	// ë¨ìxèàóù
+	// ÈÄüÂ∫¶Âá¶ÁêÜ
 	// ================
-	// ë¨ìxîΩâf
+	// ÈÄüÂ∫¶ÂèçÊò†
 	transform->SetPos(transform->GetPos().x + transform->GetVel().x + transform->GetOutVel().x, transform->GetPos().y + transform->GetVel().y + transform->GetOutVel().y);
-	// ë¨ìxå∏ë¨èàóù
+	// ÈÄüÂ∫¶Ê∏õÈÄüÂá¶ÁêÜ
 	if (isGround)
 	{
 		transform->SetVel(transform->GetVel().x * 0.6f, transform->GetVel().y * 0.5f);
@@ -278,30 +373,54 @@ void PlayerGame::OnUpdate()
 		transform->SetVel(transform->GetVel().x * 0.6f, transform->GetVel().y * 0.5f);
 		transform->SetOutVel(transform->GetOutVel().x * 0.98f, transform->GetOutVel().y * 0.94f);
 	}
-	// âÒì]îΩâf
+	// ÂõûËª¢ÂèçÊò†
 	colidPool->GetColider()[0].Rotate(transform->GetRotation());
 
 
 	isGround = false;
 	isGrab = false;
+	inPush = false;
+
+	isGround = obj->IsSetGround();
 
 	// =======================
-	// è’ìÀèàóù
+	// Ë°ùÁ™ÅÂá¶ÁêÜ
 	// =======================
-	// yÇÕògäOÇ…Ç≈Ç»Ç¢ÇÊÇ§Ç…Ç∑ÇÈ(àÍâû)
-	if (transform->GetPos().y + transform->GetSize().y / 2 > SCREEN_HEIGHT)
+	// y„ÅØÊû†Â§ñ„Å´„Åß„Å™„ÅÑ„Çà„ÅÜ„Å´„Åô„Çã(‰∏ÄÂøú)
+	float downLimit = Camera::GetInstance()->GetInstance()->GetDownLimit();
+
+	if (transform->GetPos().y + transform->GetSize().y * 0.5f > downLimit)
 	{
-		//transform->SetPos(transform->GetPos().x, SCREEN_HEIGHT - transform->GetSize().y / 2);
+		//transform->SetPos(transform->GetPos().x, SCREEN_HEIGHT - transform->GetSize().y * 0.5f);
 		obj->GetTransform()->SetPos(100.0f, 900.0f);
 		if (g_GameData->HasSwap()) g_GameData->ChangeSwap();
 		isGround = true;
+		isDie = true;
+		OnGameData::GetInstance()->SetGameOver(true);
 	}
+	colidCheckNum = 0;
 	ColidObject();
 	ColidBlock();
+	ColidOverMap();
 
 	prevColidPos = colidPool->GetColider()[0].GetPos();
 
-	Camera::GetInstance()->SetPos(transform->GetPos());
+	Camera::GetInstance()->SetPos(transform->GetPos().x, transform->GetPos().y - 150.0f);
+
+	if (!g_GameData->HasSwap())
+	{
+		D3DXVECTOR2 camPos = Camera::GetInstance()->GetOriginPos();
+		D3DXVECTOR2 maskPos = transform->GetPos() - camPos;
+		maskPos.x = (float)maskPos.x / SCREEN_WIDTH;
+		maskPos.y = (float)maskPos.y / SCREEN_HEIGHT;
+		SetMask(maskPos, { 0.25f, 0.35f });
+	}
+	else
+	{
+		SetMask({ 0.0f, 0.0f }, { 0.0f, 0.0f });
+	}
+
+	end = std::chrono::high_resolution_clock::now();
 }
 
 void PlayerGame::OnDraw()
@@ -309,64 +428,107 @@ void PlayerGame::OnDraw()
 	if (isDie) return;
 
 	D3DXVECTOR2 pos =  obj->GetTransform()->GetPos();
+	D3DXVECTOR2 size = obj->GetTransform()->GetSize();
 	D3DXVECTOR2 cameraPos = Camera::GetInstance()->GetOriginPos();
 
 	D3DXVECTOR2 drawPos = pos - cameraPos;
 
-	//colidPool->GetColider()[1].viewColid(D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.3f));
-	//colidPool->GetColider()[2].viewColid(D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.3f));
-
 	if (drawPlayer)
 	{
-		if (isRun)
+		float backAdd = 0.0f;
+		if (moveDir < 0)
+		{
+			backAdd = 1.0f;
+		}
+
+		if (isJump)
+		{
+			DrawSpriteColor(jumpTex[drawMode],
+				drawPos.x, drawPos.y,
+				size.x, size.y,
+				jUV.x + (jUV.z * backAdd), jUV.y,
+				jUV.z * moveDir, jUV.w,
+				1.0f, 1.0f, 1.0f, 1.0f);
+		}
+		else if (isGrab)
+		{
+			DrawSpriteColor(pushTex[drawMode],
+				drawPos.x, drawPos.y,
+				size.x, size.y,
+				pUV.x + (pUV.z * backAdd), pUV.y,
+				pUV.z * pushDir, pUV.w,
+				1.0f, 1.0f, 1.0f, 1.0f);
+		}
+		else if (isRun)
 		{
 			DrawSpriteColor(runTex[drawMode],
 				drawPos.x, drawPos.y,
-				obj->GetTransform()->GetSize().x, obj->GetTransform()->GetSize().y,
-				rU, rV,
+				size.x, size.y,
+				rU + (rUW * backAdd), rV,
 				rUW * moveDir, rVH,
+				1.0f, 1.0f, 1.0f, 1.0f);
+		}
+		else if (isWalk)
+		{
+			DrawSpriteColor(walkTex[drawMode],
+				drawPos.x, drawPos.y,
+				size.x, size.y,
+				wUV.x + (wUV.z * backAdd), wUV.y,
+				wUV.z * moveDir, wUV.w,
 				1.0f, 1.0f, 1.0f, 1.0f);
 		}
 		else
 		{
 			DrawSpriteColor(idleTex[drawMode],
 				drawPos.x, drawPos.y,
-				obj->GetTransform()->GetSize().x, obj->GetTransform()->GetSize().y,
-				0.0f, 0.0f,
-				1.0f * moveDir, 1.0f,
+				size.x, size.y,
+				iUV.x + (iUV.z * backAdd), iUV.y,
+				iUV.z * moveDir, iUV.w,
 				1.0f, 1.0f, 1.0f, 1.0f);
 		}
 	}
 
+	if (inPush && !pushGrabKey)
+	{
+		DrawSprite(X_buttonTex,
+			drawPos.x, drawPos.y - 100.0f,
+			pushAnounceSize.x, pushAnounceSize.y, 
+			0.0f, 0.0f,
+			1.0f, 1.0f);
+	}
+
 	write->SetFont(debugData);
+	SetPixelShader(0);
+}
 
-	// ÉfÉoÉbÉO
-	/*int x = pos.x;
-	std::string deb = "X: " + std::to_string(x);
-	write->DrawString("X: " + std::to_string(x), D3DXVECTOR2(1000, 50), D2D1_DRAW_TEXT_OPTIONS_NONE);
-	int y = pos.y;
-	write->DrawString("Y: " + std::to_string(y), D3DXVECTOR2(1000, 75), D2D1_DRAW_TEXT_OPTIONS_NONE);
+void PlayerGame::Move()
+{
+	Transform2D* transform = obj->GetTransform();
+	float moveVel = 2.5f;
 
-	D3DXVECTOR2 rs = GetRightStick(0);
-	D3DXVECTOR2 ls = GetLeftStick(0);
+	// „ÉÄ„ÉÉ„Ç∑„É•Âà§ÂÆö
+	// TODO: ÁùÄÂú∞ÊôÇ„Åò„ÇÉ„Å™„ÅÑ„Å®„ÉÄ„ÉÉ„Ç∑„É•ÈñãÂßã„Åß„Åç„Å™„ÅÑ„Çà„ÅÜ„Å´„Åó„Å¶„ÇÇ„ÅÑ„ÅÑ„Åã„ÇÇ
+	if (GetKeyboardPress(DIK_LSHIFT) || IsButtonPressed(0, BUTTON_A)) moveVel = 4.35f;
 
-	write->DrawString("rs x:" + std::to_string(rs.x) + " y: " + std::to_string(rs.y), D3DXVECTOR2(1000, 120), D2D1_DRAW_TEXT_OPTIONS_NONE);
-
-	write->DrawString("ls x:" + std::to_string(ls.x) + " y: " + std::to_string(ls.y), D3DXVECTOR2(1000, 150), D2D1_DRAW_TEXT_OPTIONS_NONE);
-
-	float t = GetTriger(0);
-	write->DrawString("t:" + std::to_string(t), D3DXVECTOR2(1000, 250), D2D1_DRAW_TEXT_OPTIONS_NONE);
-
-	bool rt = IsRightTrigger(0);
-
-	if(rt)write->DrawString("rt: true", D3DXVECTOR2(1000, 300), D2D1_DRAW_TEXT_OPTIONS_NONE);
-	else write->DrawString("rt: false", D3DXVECTOR2(1000, 300), D2D1_DRAW_TEXT_OPTIONS_NONE);
-	
-
-	bool lt = IsLeftTrigger(0);
-
-	if (lt)write->DrawString("lt: true", D3DXVECTOR2(1000, 350), D2D1_DRAW_TEXT_OPTIONS_NONE);
-	else write->DrawString("lt: false", D3DXVECTOR2(1000, 350), D2D1_DRAW_TEXT_OPTIONS_NONE);*/
+	// ÁßªÂãïÂá¶ÁêÜ
+	if (GetKeyboardPress(DIK_A) || GetLeftStick(0).x < 0.0f)
+	{// Â∑¶
+		if (!isGrab)
+		{
+			transform->SetVel(transform->GetVel().x - moveVel * moveSign, transform->GetVel().y);
+		}
+		prevInput = true;
+		moveDir = -1.0f * moveSign;
+	}
+	if (GetKeyboardPress(DIK_D) || GetLeftStick(0).x > 0.0f)
+	{// Âè≥
+		if (!isGrab)
+		{
+			transform->SetVel(transform->GetVel().x + moveVel * moveSign, transform->GetVel().y);
+		}
+		prevInput = true;
+		moveDir = 1.0f * moveSign;
+	}
 }
 
 void PlayerGame::Jump()
@@ -378,20 +540,34 @@ void PlayerGame::Jump()
 		return;
 	}
 
-	// ÉLÅ[ÇâüÇµÇΩèuä‘Ç…ÉWÉÉÉìÉvÇÃílÇç≈ëÂílÇ…èâä˙âª
+	Transform2D* transform = obj->GetTransform();
+
+	// „Ç≠„Éº„ÇíÊäº„Åó„ÅüÁû¨Èñì„Å´„Ç∏„É£„É≥„Éó„ÅÆÂÄ§„ÇíÊúÄÂ§ßÂÄ§„Å´ÂàùÊúüÂåñ
 	if (currentJumpFrame == 0)
 	{
 		currentJumpHeight = maxJumpHeight;
 		isJump = true;
+
+		// „Åô„Å™„Åº„Åì„Çä
+		EffectObj sand;
+		sand.allFrame = 13;
+		sand.tex[0] = JumpSand[0];
+		sand.tex[1] = JumpSand[1];
+		sand.size = { 65.0f, 65.0f };
+		sand.pos = { transform->GetPos().x - 40.0f, transform->GetPos().y + 40.0f };
+
+		MainInGame::effectManager.AlphaAdd(sand);
+		sand.pos.x += 80.0f;
+		MainInGame::effectManager.AlphaAdd(sand);
+
+		PlaySound(jumpSe, 0);
 	}
 
-	Transform2D* transform = obj->GetTransform();
-
-	// èdóÕï™Ç‡ã≠Ç≥Çâ¡éZÇ∑ÇÈ(èdóÕÇñ≥éãÇ∑ÇÈ)
+	// ÈáçÂäõÂàÜ„ÇÇÂº∑„Åï„ÇíÂä†ÁÆó„Åô„Çã(ÈáçÂäõ„ÇíÁÑ°Ë¶ñ„Åô„Çã)
 	float jumpStr = currentJumpHeight + transform->GetGravity();
 	transform->SetVel(transform->GetVel().x, transform->GetVel().y - jumpStr);
 
-	// ÉWÉÉÉìÉvéûä‘Ç™âﬂÇ¨ÇΩÇÁÉWÉÉÉìÉvÇÃílÇ™0Ç…Ç»ÇÈ
+	// „Ç∏„É£„É≥„ÉóÊôÇÈñì„ÅåÈÅé„Åé„Åü„Çâ„Ç∏„É£„É≥„Éó„ÅÆÂÄ§„Åå0„Å´„Å™„Çã
 	float ret = maxJumpHeight / jumpFrame;
 	currentJumpHeight -= ret;
 
@@ -400,26 +576,13 @@ void PlayerGame::Jump()
 
 void PlayerGame::ColidBlock()
 {
-	//Å@èâä˙âª
+	//„ÄÄÂàùÊúüÂåñ
 	Transform2D* trans = obj->GetTransform();
 	std::vector<Colider2D> colids = colidPool->GetColider();
 
-	std::list<GameObject*>& map = BlockMap::GetInstance()->GetMap();
-	std::list<GameObject*>& map2 = BlockMap::GetInstance()->GetMap2();
-	std::list<GameObject*> checkMap;
-	checkMap = map;
-
-	// ÉåÉCÉÑÅ[2ÇÃí«â¡
-	if (OnGameData::GetInstance()->GetCurrentLayer() >= 1)
-	{
-		for (GameObject* object : map2)
-		{
-			checkMap.push_back(object);
-		}
-	}
-
 	bool isFriction = false;
-	bool damage = false;
+	bool damageColid = false;
+	bool damaged = false;
 
 	D3DXVECTOR2 frictionColidPos;
 	D3DXVECTOR2	frictionColidSize;
@@ -427,150 +590,101 @@ void PlayerGame::ColidBlock()
 	D3DXVECTOR2 frictionBlockSize;
 	std::string targetTag = "";
 
-	// ==============
-	// ÉXÉeÅ[ÉWè’ìÀîªíË
-	// ==============
-	D3DXVECTOR2 pos = colids[0].GetPos();
-	D3DXVECTOR2 size = colids[0].GetSize();
-
+	D3DXVECTOR2 moveAll = {0.0f, 0.0f};
 
 	// ==============
-	// è’ìÀîªíË
-	// ==============
-	for (GameObject* object : checkMap)
-	{
-		std::vector<Colider2D> target = object->GetComponent<ColiderPool>()->GetColider();
-		damage = false;
-
-		for (int j = 0; j < target.size(); j++)
-		{
-			Colider2D colid = target[j];
-			if (colid.GetTag() == "NOT")continue;
-			if (colid.GetTag() == "Damage") damage = true;
-
-			D3DXVECTOR2 BlockPos = colid.GetPos();
-			D3DXVECTOR2 BlockSize = colid.GetSize();
-
-			D3DXVECTOR2 distance = D3DXVECTOR2(fabsf(pos.x - BlockPos.x), fabsf(pos.y - BlockPos.y));
-			D3DXVECTOR2 sumSize = D3DXVECTOR2((size.x + BlockSize.x) / 2.0f, (size.y + BlockSize.y) / 2.0f);
-
-			if (distance.x < sumSize.x &&
-				distance.y < sumSize.y)
-			{	// è’ìÀéû
-				isFriction = true;
-				frictionColidPos = pos;
-				frictionColidSize = size;
-				frictionBlockPos = BlockPos;
-				frictionBlockSize = BlockSize;
-				targetTag = colid.GetTag();
-				break;
-			}
-		}
-		if (isFriction)break;
-	} // è’ìÀîªíËèIóπ
-	if (!isFriction)return;
-
-	// ==============
-	// è’ìÀï”ÇÃämîF
-	// ==============
-	float playerTop = frictionColidPos.y - frictionColidSize.y / 2;
-	float playerBottom = frictionColidPos.y + frictionColidSize.y / 2;
-	float playerLeft = frictionColidPos.x - frictionColidSize.x / 2;
-	float playerRight = frictionColidPos.x + frictionColidSize.x / 2;
-
-	float playerPrevTop = prevColidPos.y - frictionColidSize.y / 2;
-	float playerPrevBottom = prevColidPos.y + frictionColidSize.y / 2;
-	float playerPrevLeft = prevColidPos.x - frictionColidSize.x / 2;
-	float playerPrevRight = prevColidPos.x + frictionColidSize.x / 2;
-
-	float blockTop = frictionBlockPos.y - frictionBlockSize.y / 2;
-	float blockBottom = frictionBlockPos.y + frictionBlockSize.y / 2;
-	float blockLeft = frictionBlockPos.x - frictionBlockSize.x / 2;
-	float blockRight = frictionBlockPos.x + frictionBlockSize.x / 2;
-
-	// ï”ÇÃîªíË
-	if (playerPrevBottom <= blockTop && playerTop <= blockTop && playerBottom >= blockTop)
-	{	// ÉuÉçÉbÉNÇÃè„Ç…è’ìÀ
-		trans->SetPos(frictionColidPos.x, blockTop - trans->GetSize().y / 2);
-	}
-	else if (playerPrevTop >= blockBottom && playerTop <= blockBottom && playerBottom >= blockBottom)
-	{	// ÉuÉçÉbÉNÇÃâ∫Ç…è’ìÀ
-		trans->SetPos(frictionColidPos.x, blockBottom + trans->GetSize().y / 2);
-	}
-	else if (playerPrevRight <= blockLeft && playerRight >= blockLeft && playerLeft <= blockLeft)
-	{	// ÉuÉçÉbÉNÇÃç∂Ç…è’ìÀ
-		trans->SetPos(blockLeft - frictionColidSize.x / 2, frictionColidPos.y);
-	}
-	else if (playerPrevLeft >= blockRight && playerLeft <= blockRight && playerRight >= blockRight)
-	{	// ÉuÉçÉbÉNÇÃâEÇ…è’ìÀ
-		trans->SetPos(blockRight + frictionColidSize.x / 2, frictionColidPos.y);
-	}
-
-	if (damage)obj->GetComponent<Damaged>()->Damage(1);
-
-	// çƒìxè’ìÀîªíËÇéÊÇÈ
-	ColidBlock();
-	ColidLayer();
-
-	isGround = true;
-}
-
-void PlayerGame::ColidLayer()
-{
-	//Å@èâä˙âª
-	Transform2D* trans = obj->GetTransform();
-	std::vector<Colider2D> colids = colidPool->GetColider();
-	std::list<GameObject*>& map = BlockMap::GetInstance()->GetLayer2();
-
-	bool isFriction = false;
-
-	D3DXVECTOR2 frictionColidPos;
-	D3DXVECTOR2	frictionColidSize;
-	D3DXVECTOR2 frictionBlockPos;
-	D3DXVECTOR2 frictionBlockSize;
-	std::string targetTag = "";
-
-	// ==============
-	// ÉXÉeÅ[ÉWè’ìÀîªíË
+	// „Çπ„ÉÜ„Éº„Ç∏Ë°ùÁ™ÅÂà§ÂÆö
 	// ==============
 	D3DXVECTOR2 pos = colids[0].GetPos();
 	D3DXVECTOR2 size = colids[0].GetSize();
 
+	std::list<GameObject*>& map = BlockMap::GetInstance()->GetSortedMap(pos, size + D3DXVECTOR2(10.0f, 0.0f));
 
 	// ==============
-	// è’ìÀîªíË
+	// Ë°ùÁ™ÅÂà§ÂÆö
 	// ==============
 	for (GameObject* object : map)
 	{
 		std::vector<Colider2D> target = object->GetComponent<ColiderPool>()->GetColider();
+		damageColid = false;
+
 		for (int j = 0; j < target.size(); j++)
 		{
 			Colider2D colid = target[j];
 			if (colid.GetTag() == "NOT")continue;
+			if (colid.GetTag() == "Damage") damageColid = true;
 
 			D3DXVECTOR2 BlockPos = colid.GetPos();
 			D3DXVECTOR2 BlockSize = colid.GetSize();
 
-			D3DXVECTOR2 distance = D3DXVECTOR2(fabsf(pos.x - BlockPos.x), fabsf(pos.y - BlockPos.y));
-			D3DXVECTOR2 sumSize = D3DXVECTOR2((size.x + BlockSize.x) / 2.0f, (size.y + BlockSize.y) / 2.0f);
+			D3DXVECTOR2 playerPos = pos + moveAll;
+
+			D3DXVECTOR2 distance = D3DXVECTOR2(fabsf(playerPos.x - BlockPos.x), fabsf(playerPos.y - BlockPos.y));
+			D3DXVECTOR2 sumSize = D3DXVECTOR2((size.x + BlockSize.x) * 0.5f, (size.y + BlockSize.y) * 0.5f);
 
 			if (distance.x < sumSize.x &&
 				distance.y < sumSize.y)
-			{	// è’ìÀéû
-				g_GameData->SetLayerAlpha(0.6f);
-				return;
+			{	// Ë°ùÁ™ÅÊôÇ
+				isFriction = true;
+				frictionColidPos = playerPos;
+				frictionColidSize = size;
+				frictionBlockPos = BlockPos;
+				frictionBlockSize = BlockSize;
+				targetTag = colid.GetTag();
+				
+				if (damageColid) damaged = true;
+
+				// ==============
+				// Ë°ùÁ™ÅËæ∫„ÅÆÁ¢∫Ë™ç
+				// ==============
+				float playerTop = frictionColidPos.y - frictionColidSize.y * 0.5f;
+				float playerBottom = frictionColidPos.y + frictionColidSize.y * 0.5f;
+				float playerLeft = frictionColidPos.x - frictionColidSize.x * 0.5f;
+				float playerRight = frictionColidPos.x + frictionColidSize.x * 0.5f;
+
+				float playerPrevTop = prevColidPos.y - frictionColidSize.y * 0.5f;
+				float playerPrevBottom = prevColidPos.y + frictionColidSize.y * 0.5f;
+				float playerPrevLeft = prevColidPos.x - frictionColidSize.x * 0.5f;
+				float playerPrevRight = prevColidPos.x + frictionColidSize.x * 0.5f;
+
+				float blockTop = frictionBlockPos.y - frictionBlockSize.y * 0.5f;
+				float blockBottom = frictionBlockPos.y + frictionBlockSize.y * 0.5f;
+				float blockLeft = frictionBlockPos.x - frictionBlockSize.x * 0.5f;
+				float blockRight = frictionBlockPos.x + frictionBlockSize.x * 0.5f;
+
+				// Ëæ∫„ÅÆÂà§ÂÆö
+	
+				if (playerPrevRight <= blockLeft && playerRight >= blockLeft && playerLeft <= blockLeft)
+				{	// „Éñ„É≠„ÉÉ„ÇØ„ÅÆÂ∑¶„Å´Ë°ùÁ™Å
+					if(fabsf(playerPrevBottom - blockTop) > 0.01f )moveAll.x += blockLeft - playerRight;
+				}
+				else if (playerPrevLeft >= blockRight && playerLeft <= blockRight && playerRight >= blockRight)
+				{	// „Éñ„É≠„ÉÉ„ÇØ„ÅÆÂè≥„Å´Ë°ùÁ™Å
+					if (fabsf(playerPrevBottom - blockTop) > 0.01f)moveAll.x += blockRight - playerLeft;
+				}
+				else if (playerPrevBottom <= blockTop && playerTop <= blockTop && playerBottom >= blockTop)
+				{	// „Éñ„É≠„ÉÉ„ÇØ„ÅÆ‰∏ä„Å´Ë°ùÁ™Å
+					moveAll.y += blockTop - playerBottom;
+					isGround += true;
+				}
+				else if (playerPrevTop >= blockBottom && playerTop <= blockBottom && playerBottom >= blockBottom)
+				{	// „Éñ„É≠„ÉÉ„ÇØ„ÅÆ‰∏ã„Å´Ë°ùÁ™Å
+					moveAll.y += blockBottom - playerTop;
+				}
 			}
 		}
-		if (isFriction)break;
-	} // è’ìÀîªíËèIóπ
+	}
 
-	// è’ìÀÇµÇƒÇ¢Ç»Ç¢Ç»ÇÁñ≥ìßâﬂ
-	g_GameData->SetLayerAlpha(1.0f);
+	colids[0].SetPos(colids[0].GetPos().x + moveAll.x, colids[0].GetPos().y + moveAll.y);
+	if (damaged)
+	{
+		obj->GetComponent<Damaged>()->Damage(1);
+	}
 }
 
 void PlayerGame::ColidObject()
 {
-	//Å@èâä˙âª
+	//„ÄÄÂàùÊúüÂåñ
 	std::list<GameObject*>* pool = MainInGame::objectPool.GetPool();
 
 	for (GameObject* object : *pool)
@@ -578,8 +692,22 @@ void PlayerGame::ColidObject()
 		GameObject* target = object;
 		Pushed* pPush = object->GetComponent<Pushed>();
 
-		// âüÇπÇÈÇ‡ÇÃÇÃèÍçáåvéZÇ∑ÇÈ
+		if (fabsf(obj->GetTransform()->GetPos().x - target->GetTransform()->GetPos().x) > 2000.0f)continue;
+
+		// Êäº„Åõ„Çã„ÇÇ„ÅÆ„ÅÆÂ†¥ÂêàË®àÁÆó„Åô„Çã
 		if (pPush) ColidPush(target, pPush);
+	}
+}
+
+void PlayerGame::ColidOverMap()
+{
+	std::vector<Colider2D> colids = colidPool->GetColider();
+	D3DXVECTOR2 pos = colids[0].GetPos();
+	D3DXVECTOR2 size = colids[0].GetSize();
+
+	if (pos.x - size.x * 0.5f < 0.0f)
+	{
+		colids[0].SetPos(size.x * 0.5f, pos.y);
 	}
 }
 
@@ -589,133 +717,115 @@ void PlayerGame::ColidPush(GameObject* target, Pushed* pushed)
 	std::vector<Colider2D> colids = colidPool->GetColider();
 	Colider2D* boxColid = &target->GetComponent<ColiderPool>()->GetColider()[0];
 
-	// è’ìÀîªíË
+	// Ë°ùÁ™ÅÂà§ÂÆö
 	bool normalFriction = colids[0].IsColid(*boxColid);
 	bool rightGrab = colids[1].IsColid(*boxColid);
 	bool leftGrab = colids[2].IsColid(*boxColid);
 
-	// Ç«Ç±Ç…Ç‡è’ìÀÇµÇƒÇ¢Ç»Ç¢Ç»ÇÁèàóùÇÇµÇ»Ç¢
+	inPush = rightGrab || leftGrab || inPush;
+
+	// „Å©„Åì„Å´„ÇÇË°ùÁ™Å„Åó„Å¶„ÅÑ„Å™„ÅÑ„Å™„ÇâÂá¶ÁêÜ„Çí„Åó„Å™„ÅÑ
 	if (!normalFriction && !rightGrab && !leftGrab)return;
 
-	if (rightGrab && pushGrabKey) isGrab = true;
-	else if (leftGrab && pushGrabKey) isGrab = true;
+	if (rightGrab && pushGrabKey)
+	{
+		pushDir = 1.0f;
+		isGrab = true;
+	}
+	else if (leftGrab && pushGrabKey)
+	{
+		isGrab = true;
+		pushDir = -1.0f;
+	}
 	else isGrab = false;
 
 	D3DXVECTOR2 pos = colids[0].GetPos();
 	D3DXVECTOR2 size = colids[0].GetSize();
+	D3DXVECTOR2 moveAll = { 0.0f, 0.0f };
 
 	D3DXVECTOR2 boxPos = boxColid->GetPos();
 	D3DXVECTOR2 boxSize = boxColid->GetSize();
 
 	// ==============
-	// è’ìÀï”ÇÃämîF
+	// Ë°ùÁ™ÅËæ∫„ÅÆÁ¢∫Ë™ç
 	// ==============
-	float playerTop = pos.y - size.y / 2;
-	float playerBottom = pos.y + size.y / 2;
-	float playerLeft = pos.x - size.x / 2;
-	float playerRight = pos.x + size.x / 2;
+	float playerTop = pos.y - size.y * 0.5f;
+	float playerBottom = pos.y + size.y * 0.5f;
+	float playerLeft = pos.x - size.x * 0.5f;
+	float playerRight = pos.x + size.x * 0.5f;
 
-	float playerPrevTop = prevColidPos.y - size.y / 2;
-	float playerPrevBottom = prevColidPos.y + size.y / 2;
-	float playerPrevLeft = prevColidPos.x - size.x / 2;
-	float playerPrevRight = prevColidPos.x + size.x / 2;
+	float playerPrevTop = prevColidPos.y - size.y * 0.5f;
+	float playerPrevBottom = prevColidPos.y + size.y * 0.5f;
+	float playerPrevLeft = prevColidPos.x - size.x * 0.5f;
+	float playerPrevRight = prevColidPos.x + size.x * 0.5f;
 
-	float boxTop = boxPos.y - boxSize.y / 2;
-	float boxBottom = boxPos.y + boxSize.y / 2;
-	float boxLeft = boxPos.x - boxSize.x / 2;
-	float boxRight = boxPos.x + boxSize.x / 2;
+	float boxTop = boxPos.y - boxSize.y * 0.5f;
+	float boxBottom = boxPos.y + boxSize.y * 0.5f;
+	float boxLeft = boxPos.x - boxSize.x * 0.5f;
+	float boxRight = boxPos.x + boxSize.x * 0.5f;
 
-	// ï”ÇÃîªíË
+	// Ëæ∫„ÅÆÂà§ÂÆö
 	if (playerPrevBottom <= boxTop && playerTop <= boxTop && playerBottom >= boxTop)
-	{	// ÉuÉçÉbÉNÇÃè„Ç…è’ìÀ
-		trans->SetPos(pos.x ,boxTop - size.y / 2 - 5.0f);
+	{	// „Éñ„É≠„ÉÉ„ÇØ„ÅÆ‰∏ä„Å´Ë°ùÁ™Å
+		colids[0].SetPos(pos.x ,boxTop - size.y * 0.5f - 5.0f);
 		isGround = true;
 	}
+	else if (playerPrevTop >= boxBottom && playerBottom  >= boxBottom && playerTop <= boxBottom)
+	{	// „Éñ„É≠„ÉÉ„ÇØ„ÅÆ‰∏ã„Å´Ë°ùÁ™Å
+		colids[0].SetPos(pos.x, boxBottom + size.y * 0.5f + 5.0f);
+	}
 	else if (playerPrevRight <= boxLeft && playerRight >= boxLeft && playerLeft <= boxLeft)
-	{	// ÉuÉçÉbÉNÇÃç∂Ç…è’ìÀ
-		trans->SetPos(boxLeft  - size.x / 2, pos.y - 2.0f);
+	{	// „Éñ„É≠„ÉÉ„ÇØ„ÅÆÂ∑¶„Å´Ë°ùÁ™Å
+		moveAll.x = boxLeft - playerRight - 0.5f;
 	}
 	else if (playerPrevLeft >= boxRight && playerLeft <= boxRight && playerRight >= boxRight)
-	{	// ÉuÉçÉbÉNÇÃâEÇ…è’ìÀ
-		trans->SetPos(boxRight + size.x / 2, pos.y - 2.0f);
+	{	// „Éñ„É≠„ÉÉ„ÇØ„ÅÆÂè≥„Å´Ë°ùÁ™Å
+		moveAll.x = boxRight - playerLeft + 0.5f;
 	}
 
+	colids[0].SetPos(colids[0].GetPos().x + moveAll.x, colids[0].GetPos().y + moveAll.y);
 
 	if ( !prevInput || !pushGrabKey) return;
 
 
 	if (rightGrab)
 	{
-		D3DXVECTOR2 move = pushed->Push(D3DXVECTOR2(PLAYER_PUSH * moveDir, 0.0f));
-		trans->SetPos(boxLeft + move.x - size.x / 2 - 3.0f, pos.y + move.y);
-		boxColid->SetFriction(true);
+		if (moveDir > 0)
+		{	// ÁÆ±ÊñπÂêë„Å´Âãï„Åã„Åô„Å™„Çâ
+			D3DXVECTOR2 move = pushed->Push(D3DXVECTOR2(PLAYER_PUSH * moveDir, 0.0f));
+			colids[0].SetPos(boxLeft + move.x - size.x * 0.5f, pos.y + move.y);
+			boxColid->SetFriction(true);
+		}
+		else
+		{	// Âæå„ÇçÊñπÂêë„Å´Âãï„Åã„Åô„Å™„Çâ
+			D3DXVECTOR2 first = trans->GetPos();
+			D3DXVECTOR2 move = D3DXVECTOR2(PLAYER_PUSH * moveDir, 0.0f);
+			colids[0].SetPos(boxLeft + move.x - size.x * 0.5f, pos.y + move.y);
+
+			ColidBlock();
+			D3DXVECTOR2 moved = colids[0].GetPos();
+			float boxMove = moved.x - first.x;
+			pushed->Push(D3DXVECTOR2(boxMove, 0.0f));
+		}
 	}
 	else if (leftGrab)
 	{
-		D3DXVECTOR2 move = pushed->Push(D3DXVECTOR2(PLAYER_PUSH * moveDir, 0.0f));
-		trans->SetPos(boxRight + move.x + size.x / 2, pos.y + move.y);
-		boxColid->SetFriction(true);
+		if (moveDir < 0)
+		{	// ÁÆ±ÊñπÂêë„Å´Âãï„Åã„Åô„Å™„Çâ
+			D3DXVECTOR2 move = pushed->Push(D3DXVECTOR2(PLAYER_PUSH * moveDir, 0.0f));
+			colids[0].SetPos(boxRight + move.x + size.x * 0.5f, pos.y + move.y);
+			boxColid->SetFriction(true);
+		}
+		else
+		{	// Âæå„ÇçÊñπÂêë„Å´Âãï„Åã„Åô„Å™„Çâ
+			D3DXVECTOR2 first = trans->GetPos();
+			D3DXVECTOR2 move = D3DXVECTOR2(PLAYER_PUSH * moveDir, 0.0f);
+			colids[0].SetPos(boxRight + move.x + size.x * 0.5f, pos.y + move.y);
+
+			ColidBlock();
+			D3DXVECTOR2 moved = colids[0].GetPos();
+			float boxMove = moved.x - first.x;
+			pushed->Push(D3DXVECTOR2(boxMove, 0.0f));
+		}
 	}
 }
-
-//void PlayerGame::ColidBlockLine()
-//{
-//	bool Colid = false;
-//
-//	// ÉvÉåÉCÉÑÅ[ÇÃélï”ÇéÊìæ
-//	const D3DXVECTOR2* vtx =  obj->GetColider()[0].GetVertex();
-//	D3DXVECTOR2 playerVec[4] = {
-//		D3DXVECTOR2(vtx[1].x - vtx[0].x, vtx[1].y - vtx[0].y),
-//		D3DXVECTOR2(vtx[2].x - vtx[1].x, vtx[2].y - vtx[1].y),
-//		D3DXVECTOR2(vtx[3].x - vtx[2].x, vtx[3].y - vtx[2].y),
-//		D3DXVECTOR2(vtx[0].x - vtx[3].x, vtx[0].y - vtx[3].y),
-//	};
-//
-//	std::vector<GameObject*>map = BlockMap::GetInstance()->GetMap();
-//
-//	for (int i = 0; i < map.size(); i++)
-//	{
-//		// ÉuÉçÉbÉNÇÃélï”ÇéÊìæ
-//		const D3DXVECTOR2* blockVtx = map[i]->GetColider()[0].GetVertex();
-//		D3DXVECTOR2 blockVec[4] = {
-//			D3DXVECTOR2(blockVtx[1].x - blockVtx[0].x, blockVtx[1].y - blockVtx[0].y),
-//			D3DXVECTOR2(blockVtx[2].x - blockVtx[1].x, blockVtx[2].y - blockVtx[1].y),
-//			D3DXVECTOR2(blockVtx[3].x - blockVtx[2].x, blockVtx[3].y - blockVtx[2].y),
-//			D3DXVECTOR2(blockVtx[0].x - blockVtx[3].x, blockVtx[0].y - blockVtx[3].y),
-//		};
-//
-//		for (int playerCnt = 0; playerCnt < 4; playerCnt++)
-//		{
-//			for (int blockCnt = 0; blockCnt < 4; blockCnt++)
-//			{
-//				// ïΩçséûÇÕî≤ÇØÇÈ (è’ìÀÇµÇƒÇ¢Ç»Ç¢)
-//				if (Cross(playerVec[playerCnt], blockVec[blockCnt]) == 0.0f) break;
-//
-//				// ÉuÉçÉbÉNÇÃï”ÇÃêÊì™Ç©ÇÁÉvÉåÉCÉÑÅ[êÊì™Ç‹Ç≈
-//				D3DXVECTOR2 startToPlayer = D3DXVECTOR2(blockVtx[blockCnt % 4].x - playerVec[playerCnt % 4].x, blockVtx[blockCnt % 4].y - playerVec[playerCnt % 4].y);
-//				// ÉuÉçÉbÉNÇÃï”ÇÃèIí[Ç©ÇÁÉvÉåÉCÉÑÅ[êÊì™Ç‹Ç≈
-//				D3DXVECTOR2 endToPlayer = D3DXVECTOR2(blockVtx[(blockCnt + 1) % 4].x - playerVec[playerCnt % 4].x, blockVtx[(blockCnt + 1) % 4].y - playerVec[playerCnt % 4].y);
-//				// ÉvÉåÉCÉÑÅ[êÊì™Ç©ÇÁÉuÉçÉbÉNêÊì™Ç‹Ç≈
-//				D3DXVECTOR2 playerToStart = D3DXVECTOR2(playerVec[playerCnt % 4].x - blockVtx[blockCnt % 4].x, playerVec[playerCnt % 4].y - blockVtx[blockCnt % 4].y);
-//				// ÉvÉåÉCÉÑÅ[êÊì™Ç©ÇÁÉuÉçÉbÉNèIí[Ç‹Ç≈
-//				D3DXVECTOR2 playerToEnd = D3DXVECTOR2(playerVec[playerCnt % 4].x - blockVtx[(blockCnt + 1) % 4].x, playerVec[playerCnt % 4].y - blockVtx[(blockCnt + 1) % 4].y);
-//
-//				float acCross = Cross(playerToStart, blockVec[blockCnt]);
-//				float adCross = Cross(playerToEnd, blockVec[blockCnt]);
-//				float caCross = Cross(startToPlayer, playerVec[playerCnt]);
-//				float cbCross = Cross(endToPlayer, playerVec[playerCnt]);
-//
-//				float crossA = acCross * adCross;
-//				float crossB = caCross * cbCross;
-//
-//				// è’ìÀÇµÇΩ
-//				if (crossA < 0.0f && crossB < 0.0f)
-//				{
-//					Colid = true;
-//				}
-//			}
-//		}
-//	}
-//
-//
-//}

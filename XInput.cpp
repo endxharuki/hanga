@@ -5,6 +5,8 @@
 //
 //=============================================================================
 #include "XInput.h"
+#include "OnGameData.h"
+#include <list>
 
 
 //*****************************************************************************
@@ -52,6 +54,8 @@ BYTE					g_keyStateRepeat[NUM_KEY_MAX];		// キーボードの状態を受け取るワーク
 BYTE					g_keyStateRelease[NUM_KEY_MAX];		// キーボードの状態を受け取るワーク
 int						g_keyStateRepeatCnt[NUM_KEY_MAX];	// キーボードのリピートカウンタ
 
+std::list<int> notControlKeys;		// 操作不可能キーリスト
+
 //--------------------------------- mouse
 static LPDIRECTINPUTDEVICE8 pMouse = NULL; // mouse
 
@@ -69,6 +73,8 @@ static DWORD	switchState[GAMEPADMAX];	// スイッチ情報
 static DWORD	padTrigger[GAMEPADMAX];
 static DWORD	switchTrigger[GAMEPADMAX];
 static int		padCount = 0;			// 検出したパッドの数
+
+std::list<int> notControlPads;		// 操作不可能パッドリスト
 
 
 //=============================================================================
@@ -93,6 +99,8 @@ HRESULT InitInput(HINSTANCE hInst, HWND hWnd)
 	
 	// パッドの初期化
 	InitializePad(hWnd);
+
+	notControlKeys.clear();
 
 	return S_OK;
 }
@@ -198,6 +206,12 @@ HRESULT UpdateKeyboard(void)
 	hr = g_pDIDevKeyboard->GetDeviceState(sizeof(g_keyState), g_keyState);
 	if(SUCCEEDED(hr))
 	{
+		// 指定のキーを押していない状態に切り替える
+		for (int n : notControlKeys)
+		{
+			g_keyState[n] = 0;
+		}
+
 		for(int cnt = 0; cnt < NUM_KEY_MAX; cnt++)
 		{
 			g_keyStateTrigger[cnt] = (keyStateOld[cnt] ^ g_keyState[cnt]) & g_keyState[cnt];
@@ -258,6 +272,67 @@ bool GetKeyboardRepeat(int key)
 bool GetKeyboardRelease(int key)
 {
 	return (g_keyStateRelease[key] & 0x80) ? true : false;
+}
+
+void VirtualInputPress(int nKey)
+{
+	// 前回のデータを保存
+	BYTE keyStateOld[256];
+	memcpy(keyStateOld, g_keyState, NUM_KEY_MAX);
+
+	g_keyState[nKey] = 0x80;
+
+	g_keyStateTrigger[nKey] = (keyStateOld[nKey] ^ g_keyState[nKey]) & g_keyState[nKey];
+	g_keyStateRelease[nKey] = (keyStateOld[nKey] ^ g_keyState[nKey]) & ~g_keyState[nKey];
+	g_keyStateRepeat[nKey] = g_keyStateTrigger[nKey];
+}
+
+void NotControlKey(int nKey)
+{
+	// 重複がなければ追加する
+	for (int n : notControlKeys)
+	{
+		if (n == nKey) return;
+	}
+	notControlKeys.push_back(nKey);
+}
+
+void ControlKey(int nKey)
+{
+	// 該当キーがあれば削除する
+	notControlKeys.remove_if([nKey](const int n) {
+		if (n == nKey) return true;
+		return false;
+		});
+}
+
+void AllControlKey()
+{
+	notControlKeys.clear();
+}
+
+void NotControlPad(int nPad)
+{
+	// 重複がなければ追加する
+	for (int n : notControlPads)
+	{
+		if (n == nPad) return;
+	}
+	notControlPads.push_back(nPad);
+}
+
+void ControlPad(int nKey)
+{
+	// 該当キーがあれば削除する
+	notControlPads.remove_if([nKey](const int n) {
+		if (n == nKey) return true;
+		return false;
+		});
+}
+
+void AllControlPad()
+{
+	notControlPads.clear();
 }
 
 
@@ -506,6 +581,8 @@ void UpdatePad(void)
 
 	for ( i=0 ; i<padCount ; i++ ) 
 	{
+
+		
 		DWORD lastPadState;
 		DWORD lastSwitchState;
 		lastPadState = padState[i];
@@ -527,6 +604,14 @@ void UpdatePad(void)
 			result = pGamePad[i]->Acquire();
 			while ( result == DIERR_INPUTLOST )
 				result = pGamePad[i]->Acquire();
+		}
+
+		for (int n : notControlPads)
+		{	// 左スティックの方向を強制的に初期化させる
+			if (BUTTON_UP == n && dijs.lY < 0)dijs.lY = 0.0f;
+			else if (BUTTON_DOWN == n && dijs.lY > 0)dijs.lY = 0.0f;
+			else if (BUTTON_LEFT == n && dijs.lX < 0)dijs.lX = 0.0f;
+			else if (BUTTON_RIGHT == n && dijs.lX > 0)dijs.lX = 0.0f;
 		}
 
 		// パッド情報を入れ込む
@@ -585,6 +670,11 @@ void UpdatePad(void)
 			default:
 				break;
 			}
+		}
+		// 指定のパッドを押していない状態に切り替える
+		for (int n : notControlPads)
+		{
+			padState[i] &= ~n;
 		}
 
 		// Trigger設定

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef _ROCK_GENERATOR_H_
 #define _ROCK_GENERATOR_H_
@@ -11,24 +11,22 @@
 class RockGenerater : public GameObject
 {
 public:
-	RockGenerater(D3DXVECTOR2 pos, D3DXVECTOR2 size)
+	RockGenerater(D3DXVECTOR2 pos, D3DXVECTOR2 size, bool left)
 	{
-		// ¶ãÀ•W‚©‚ç’†SÀ•W‚ğŠi”[
-		transform.SetPos(pos.x + size.x / 2 + 20.0f, pos.y + size.y);
-		transform.SetSize(size * 2);
+		// å·¦ä¸Šåº§æ¨™ã‹ã‚‰ä¸­å¿ƒåº§æ¨™ã‚’æ ¼ç´
+		transform.SetPos(pos.x, pos.y);
+		transform.SetSize(size);
 
+		isLeft = left;
 
-		stateMachine.SceneRegister(IdleKey, std::make_shared<RockGeneraterIdle>(IdleKey, this));
+		stateMachine.SceneRegister(IdleKey, std::make_shared<RockGeneraterIdle>(IdleKey, this, left));
 	}
 
-	~RockGenerater()
-	{
-
-	}
+	~RockGenerater(){}
 
 	void Start() override
 	{
-		// ŠJnƒV[ƒ“‚Ìw’è
+		// é–‹å§‹ã‚·ãƒ¼ãƒ³ã®æŒ‡å®š
 		stateMachine.SetStartState(IdleKey);
 	}
 
@@ -42,8 +40,12 @@ public:
 		stateMachine.Draw();
 	}
 
+	bool IsLeftDir() { return isLeft; }
+
 private:
 	const std::string IdleKey = "Idle";
+	
+	bool isLeft = false;
 };
 
 #endif

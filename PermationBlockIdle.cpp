@@ -13,8 +13,8 @@ void PermationBlockIdle::SetUp()
 
 	if (type == 0)
 	{
-		blockTex[0] = LoadTexture((char*)"data/TEXTURE/Dirt1.png");
-		blockTex[1] = LoadTexture((char*)"data/TEXTURE/Dirt2.png");
+		blockTex[0] = LoadTexture((char*)"data/TEXTURE/soil_2.png");
+		blockTex[1] = LoadTexture((char*)"data/TEXTURE/soil_2_R.png");
 	}
 	else
 	{
@@ -26,6 +26,8 @@ void PermationBlockIdle::SetUp()
 	obj->GetComponent<ColiderPool>()->Add(
 		Colider2D(obj->GetTransform())
 	);
+
+	drawMode = 0;
 }
 
 void PermationBlockIdle::CleanUp()
@@ -35,18 +37,21 @@ void PermationBlockIdle::CleanUp()
 
 void PermationBlockIdle::OnUpdate()
 {
-	drawMode = OnGameData::GetInstance()->HasSwap() ? 1 : 0;
-
-	alpha = OnGameData::GetInstance()->GetLayerAlpha();
 }
 
 void PermationBlockIdle::OnDraw()
 {
+	drawMode = OnGameData::GetInstance()->HasSwap() ? 1 : 0;
+
 	// ƒJƒƒ‰‚ÌˆÚ“®
 	D3DXVECTOR2 pos = obj->GetTransform()->GetPos();
 	D3DXVECTOR2 size = obj->GetTransform()->GetSize();
 	Camera* camera = Camera::GetInstance();
 	D3DXVECTOR2 drawPos = D3DXVECTOR2(pos.x - camera->GetOriginPos().x, pos.y - camera->GetOriginPos().y);
+
+
+	SetPixelShader(1);
+	SetVertexShader(1);
 
 	DrawSpriteColor(blockTex[drawMode],
 		drawPos.x, drawPos.y,
@@ -55,4 +60,7 @@ void PermationBlockIdle::OnDraw()
 		size.x / CHIP_X_SIZE, size.y / CHIP_Y_SIZE,
 		1.0f, 1.0f, 1.0f, alpha
 	);
+
+	SetPixelShader(0);
+	SetVertexShader(0);
 }

@@ -98,9 +98,19 @@ void SetCullingMode(CULL_MODE cm);
 void SetSamplerState(FILTER_MODE fm, ADDRESS_MODE am);
 void SetSamplerBorderColor(D3DXCOLOR col);
 
+void SetVertexShader(int s);
+void SetPixelShader(int s);
+
 void SetWorldViewProjection2D( void );
 void SetWorldMatrix();
 void SetViewMatrix( D3DXMATRIX *ViewMatrix );
-void SetProjectionMatrix( D3DXMATRIX *ProjectionMatrix );
+void SetProjectionMatrix( D3DXMATRIX *ProjectionMatrix);
 
-void SwapView();
+void SetMask(D3DXVECTOR2 pos, D3DXVECTOR2 size);
+
+ID3D11ShaderResourceView* GetScreenShot();
+
+// 横半分にしたテクスチャを返す
+void SplitTexture(ID3D11ShaderResourceView* inputSRV, ID3D11ShaderResourceView** R_outputSRV, ID3D11ShaderResourceView** L_outputSRV);
+
+

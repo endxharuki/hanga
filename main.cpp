@@ -1,6 +1,6 @@
-/*==============================================================================
+ï»¿/*==============================================================================
 
-   ƒeƒNƒXƒ`ƒƒ‚Ì•`‰æ [main.cpp]
+   ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®æç”» [main.cpp]
                                                          Author : 
                                                          Date   : 
 --------------------------------------------------------------------------------
@@ -24,15 +24,16 @@
 #include "MainInClear.h"
 #include "MainInGameOver.h"
 #include "MainInStageSelect.h"
+#include "GoalResult.h"
 
 //*****************************************************************************
-// ƒ}ƒNƒ’è‹`
+// ãƒã‚¯ãƒ­å®šç¾©
 //*****************************************************************************
-#define CLASS_NAME			"GameWindow"				// ƒEƒCƒ“ƒhƒE‚ÌƒNƒ‰ƒX–¼
-#define WINDOW_CAPTION		"”Å‰æ"			// ƒEƒCƒ“ƒhƒE‚ÌƒLƒƒƒvƒVƒ‡ƒ“–¼
+#define CLASS_NAME			"GameWindow"				// ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã®ã‚¯ãƒ©ã‚¹å
+#define WINDOW_CAPTION		"ç‰ˆç”»"			// ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã®ã‚­ãƒ£ãƒ—ã‚·ãƒ§ãƒ³å
 
 //*****************************************************************************
-// ƒvƒƒgƒ^ƒCƒvéŒ¾
+// ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€
 //*****************************************************************************
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow);
@@ -42,14 +43,12 @@ void Draw(void);
 
 
 //*****************************************************************************
-// ƒOƒ[ƒoƒ‹•Ï”:
+// ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°:
 //*****************************************************************************
-Camera* Camera::Instance = new Camera();
-Camera* In = Camera::GetInstance();
-
+Camera* g_camera = Camera::GetInstance();
 
 //*****************************************************************************
-// mainƒNƒ‰ƒX ˆ—‚Ì“Š‡
+// mainã‚¯ãƒ©ã‚¹ å‡¦ç†ã®çµ±æ‹¬
 //*****************************************************************************
 class MainGame
 {
@@ -60,12 +59,15 @@ public:
 		stateMachine.SceneRegister(StageSelectKey, std::make_shared<MainStageSelect>(StageSelectKey));
 		stateMachine.SceneRegister(GameKey, std::make_shared<MainInGame>(GameKey));
 		stateMachine.SceneRegister(ClearKey, std::make_shared<MainClear>(ClearKey));
-		stateMachine.SceneRegister(GameOverKey, std::make_shared<MainGameOver>(GameOverKey));
+
+		// ãƒã‚¦ãƒ³ãƒˆç”¨ã‚·ãƒ¼ãƒ³
+		stateMachine.MountSceneRegister(GoalResultMountKey, std::make_shared<GoalResult>(GoalResultMountKey));
+		stateMachine.MountSceneRegister(GameOverKey, std::make_shared<MainGameOver>(GameOverKey));
 	}
 
 	void Start()
 	{
-		// ŠJnƒV[ƒ“‚Ìw’è
+		// é–‹å§‹ã‚·ãƒ¼ãƒ³ã®æŒ‡å®š
 		stateMachine.SetStartState(TitleKey);
 	}
 
@@ -90,7 +92,11 @@ private:
 	const std::string StageSelectKey = "Select";
 	const std::string GameKey = "Game";
 	const std::string ClearKey = "Clear";
-	const std::string GameOverKey = "GameOver";
+
+	// ãƒã‚¦ãƒ³ãƒˆç”¨ã‚­ãƒ¼
+	const std::string PoseMountKey = "PoseMount";
+	const std::string GameOverKey = "GameOverMount";
+	const std::string GoalResultMountKey = "GoalResultMount";
 
 	StateMachineBase stateMachine;
 };
@@ -98,23 +104,23 @@ MainGame g_Game;
 
 
 #ifdef _DEBUG
-int		g_CountFPS;							// FPSƒJƒEƒ“ƒ^
-char	g_DebugStr[2048] = WINDOW_CAPTION;	// ƒfƒoƒbƒO•¶š•\¦—p
+int		g_CountFPS;							// FPSã‚«ã‚¦ãƒ³ã‚¿
+char	g_DebugStr[2048] = WINDOW_CAPTION;	// ãƒ‡ãƒãƒƒã‚°æ–‡å­—è¡¨ç¤ºç”¨
 
 #endif
 
 //=============================================================================
-// ƒƒCƒ“ŠÖ”
+// ãƒ¡ã‚¤ãƒ³é–¢æ•°
 //=============================================================================
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	UNREFERENCED_PARAMETER(hPrevInstance);	// –³‚­‚Ä‚à—Ç‚¢‚¯‚ÇAŒx‚ªo‚éi–¢g—péŒ¾j
-	UNREFERENCED_PARAMETER(lpCmdLine);		// –³‚­‚Ä‚à—Ç‚¢‚¯‚ÇAŒx‚ªo‚éi–¢g—péŒ¾j
+	UNREFERENCED_PARAMETER(hPrevInstance);	// ç„¡ãã¦ã‚‚è‰¯ã„ã‘ã©ã€è­¦å‘ŠãŒå‡ºã‚‹ï¼ˆæœªä½¿ç”¨å®£è¨€ï¼‰
+	UNREFERENCED_PARAMETER(lpCmdLine);		// ç„¡ãã¦ã‚‚è‰¯ã„ã‘ã©ã€è­¦å‘ŠãŒå‡ºã‚‹ï¼ˆæœªä½¿ç”¨å®£è¨€ï¼‰
 
-	//ƒ‰ƒ“ƒ_ƒ€ƒV[ƒh‚Ì‰Šú‰»
+	//ãƒ©ãƒ³ãƒ€ãƒ ã‚·ãƒ¼ãƒ‰ã®åˆæœŸåŒ–
 	srand((unsigned int)time(NULL));
 
-	// ŠÔŒv‘ª—p
+	// æ™‚é–“è¨ˆæ¸¬ç”¨
 	DWORD dwExecLastTime;
 	DWORD dwFPSLastTime;
 	DWORD dwCurrentTime;
@@ -137,49 +143,49 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	HWND		hWnd;
 	MSG			msg;
 	
-	// ƒEƒBƒ“ƒhƒEƒNƒ‰ƒX‚Ì“o˜^
+	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¯ãƒ©ã‚¹ã®ç™»éŒ²
 	RegisterClassEx(&wcex);
 
 	int window_width = 960;
 	int window_height = 540;
 
-	// ƒEƒBƒ“ƒhƒE‚Ìì¬
+	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä½œæˆ
 	hWnd = CreateWindow(CLASS_NAME,
 		WINDOW_CAPTION,
 		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT,																		// ƒEƒBƒ“ƒhƒE‚Ì¶À•W
-		CW_USEDEFAULT,																		// ƒEƒBƒ“ƒhƒE‚ÌãÀ•W
-		window_width + GetSystemMetrics(SM_CXDLGFRAME) * 2,									// ƒEƒBƒ“ƒhƒE‰¡•
-		window_height + GetSystemMetrics(SM_CXDLGFRAME) * 2 + GetSystemMetrics(SM_CYCAPTION),	// ƒEƒBƒ“ƒhƒEc•
+		CW_USEDEFAULT,																		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å·¦åº§æ¨™
+		CW_USEDEFAULT,																		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä¸Šåº§æ¨™
+		window_width + GetSystemMetrics(SM_CXDLGFRAME) * 2,									// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦æ¨ªå¹…
+		window_height + GetSystemMetrics(SM_CXDLGFRAME) * 2 + GetSystemMetrics(SM_CYCAPTION),	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç¸¦å¹…
 		NULL,
 		NULL,
 		hInstance,
 		NULL);
 
-	// DirectX‚Ì‰Šú‰»(ƒEƒBƒ“ƒhƒE‚ğì¬‚µ‚Ä‚©‚çs‚¤)
+	// DirectXã®åˆæœŸåŒ–(ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ä½œæˆã—ã¦ã‹ã‚‰è¡Œã†)
 	if(FAILED(Init(hInstance, hWnd, true)))
 	{
 		return -1;
 	}
 
-	// ƒtƒŒ[ƒ€ƒJƒEƒ“ƒg‰Šú‰»
-	timeBeginPeriod(1);	// •ª‰ğ”\‚ğİ’è
-	dwExecLastTime = dwFPSLastTime = timeGetTime();	// ƒVƒXƒeƒ€‚ğƒ~ƒŠ•b’PˆÊ‚Åæ“¾
+	// ãƒ•ãƒ¬ãƒ¼ãƒ ã‚«ã‚¦ãƒ³ãƒˆåˆæœŸåŒ–
+	timeBeginPeriod(1);	// åˆ†è§£èƒ½ã‚’è¨­å®š
+	dwExecLastTime = dwFPSLastTime = timeGetTime();	// ã‚·ã‚¹ãƒ†ãƒ æ™‚åˆ»ã‚’ãƒŸãƒªç§’å˜ä½ã§å–å¾—
 	dwCurrentTime = dwFrameCount = 0;
 	
-	// ƒEƒCƒ“ƒhƒE‚Ì•\¦(Init()‚ÌŒã‚ÉŒÄ‚Î‚È‚¢‚Æ‘Ê–Ú)
+	// ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã®è¡¨ç¤º(Init()ã®å¾Œã«å‘¼ã°ãªã„ã¨é§„ç›®)
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 	
 	OnGameData* data = OnGameData::GetInstance();
 
-	// ƒƒbƒZ[ƒWƒ‹[ƒv
+	// ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ãƒ«ãƒ¼ãƒ—
 	while(!data->GetShouldEnd())
 	{
 		if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if(msg.message == WM_QUIT)
-			{// PostQuitMessage()‚ªŒÄ‚Î‚ê‚½‚çƒ‹[ƒvI—¹
+			{// PostQuitMessage()ãŒå‘¼ã°ã‚ŒãŸã‚‰ãƒ«ãƒ¼ãƒ—çµ‚äº†
 				break;
 			}
 			else
@@ -190,48 +196,48 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		}
 		else
 		{
-			dwCurrentTime = timeGetTime();					// ƒVƒXƒeƒ€‚ğæ“¾
+			dwCurrentTime = timeGetTime();					// ã‚·ã‚¹ãƒ†ãƒ æ™‚åˆ»ã‚’å–å¾—
 
-			if ((dwCurrentTime - dwFPSLastTime) >= 1000)	// 1•b‚²‚Æ‚ÉÀs
+			if ((dwCurrentTime - dwFPSLastTime) >= 1000)	// 1ç§’ã”ã¨ã«å®Ÿè¡Œ
 			{
 #ifdef _DEBUG
 				g_CountFPS = dwFrameCount;
 #endif
-				dwFPSLastTime = dwCurrentTime;				// FPS‚ğ‘ª’è‚µ‚½‚ğ•Û‘¶
-				dwFrameCount = 0;							// ƒJƒEƒ“ƒg‚ğƒNƒŠƒA
+				dwFPSLastTime = dwCurrentTime;				// FPSã‚’æ¸¬å®šã—ãŸæ™‚åˆ»ã‚’ä¿å­˜
+				dwFrameCount = 0;							// ã‚«ã‚¦ãƒ³ãƒˆã‚’ã‚¯ãƒªã‚¢
 			}
 
-			if ((dwCurrentTime - dwExecLastTime) >= ((float)1000 / 60))	// 1/60•b‚²‚Æ‚ÉÀs
+			if ((dwCurrentTime - dwExecLastTime) >= ((float)1000 / 60))	// 1/60ç§’ã”ã¨ã«å®Ÿè¡Œ
 			{
-				dwExecLastTime = dwCurrentTime;	// ˆ—‚µ‚½‚ğ•Û‘¶
+				dwExecLastTime = dwCurrentTime;	// å‡¦ç†ã—ãŸæ™‚åˆ»ã‚’ä¿å­˜
 
-#ifdef _DEBUG	// ƒfƒoƒbƒO”Å‚Ì‚¾‚¯FPS‚ğ•\¦‚·‚é
+#ifdef _DEBUG	// ãƒ‡ãƒãƒƒã‚°ç‰ˆã®æ™‚ã ã‘FPSã‚’è¡¨ç¤ºã™ã‚‹
 				wsprintf(g_DebugStr, WINDOW_CAPTION);
 				wsprintf(&g_DebugStr[strlen(g_DebugStr)], " FPS:%d", g_CountFPS);
 				SetWindowText(hWnd, g_DebugStr);
 #endif
 
-				Update();			// XVˆ—
-				Draw();				// •`‰æˆ—
+				Update();			// æ›´æ–°å‡¦ç†
+				Draw();				// æç”»å‡¦ç†
 
-				dwFrameCount++;		// ˆ—‰ñ”‚ÌƒJƒEƒ“ƒg‚ğ‰ÁZ
+				dwFrameCount++;		// å‡¦ç†å›æ•°ã®ã‚«ã‚¦ãƒ³ãƒˆã‚’åŠ ç®—
 			}
 		}
 	}
 	
-	timeEndPeriod(1);				// •ª‰ğ”\‚ğ–ß‚·
+	timeEndPeriod(1);				// åˆ†è§£èƒ½ã‚’æˆ»ã™
 
-	// I—¹ˆ—
+	// çµ‚äº†å‡¦ç†
 	Uninit();
 
-	// ƒEƒBƒ“ƒhƒEƒNƒ‰ƒX‚Ì“o˜^‚ğ‰ğœ
+	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¯ãƒ©ã‚¹ã®ç™»éŒ²ã‚’è§£é™¤
 	UnregisterClass(CLASS_NAME, wcex.hInstance);
 
 	return (int)msg.wParam;
 }
 
 //=============================================================================
-// ƒvƒƒV[ƒWƒƒ
+// ãƒ—ãƒ­ã‚·ãƒ¼ã‚¸ãƒ£
 //=============================================================================
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -244,8 +250,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 		switch(wParam)
 		{
-		case VK_ESCAPE:					// [ESC]ƒL[‚ª‰Ÿ‚³‚ê‚½
-			DestroyWindow(hWnd);		// ƒEƒBƒ“ƒhƒE‚ğ”jŠü‚·‚é‚æ‚¤w¦‚·‚é
+		case VK_ESCAPE:					// [ESC]ã‚­ãƒ¼ãŒæŠ¼ã•ã‚ŒãŸ
+			DestroyWindow(hWnd);		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ç ´æ£„ã™ã‚‹ã‚ˆã†æŒ‡ç¤ºã™ã‚‹
 			break;
 		}
 		break;
@@ -258,24 +264,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 //=============================================================================
-// ‰Šú‰»ˆ—
+// åˆæœŸåŒ–å‡¦ç†
 //=============================================================================
 HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 {
-	// ƒŒƒ“ƒ_ƒŠƒ“ƒOˆ—‚Ì‰Šú‰»
+	// ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°å‡¦ç†ã®åˆæœŸåŒ–
 	InitRenderer(hInstance, hWnd, bWindow);
 
-	// “ü—Íˆ—‚Ì‰Šú‰»
+	// å…¥åŠ›å‡¦ç†ã®åˆæœŸåŒ–
 	InitInput(hInstance, hWnd);
 
 	InitSound(hWnd);
 
-	// ƒXƒvƒ‰ƒCƒg‚Ì‰Šú‰»
+	// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®åˆæœŸåŒ–
 	InitSprite();
 
 	InitInputPad();
-
-
 
 
 	g_Game.Start();
@@ -285,33 +289,33 @@ HRESULT Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow)
 
 
 //=============================================================================
-// I—¹ˆ—
+// çµ‚äº†å‡¦ç†
 //=============================================================================
 void Uninit(void)
 {
 	g_Game.UnInit();
 
-	// ƒXƒvƒ‰ƒCƒg‚ÌI—¹ˆ—
+	// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®çµ‚äº†å‡¦ç†
 	UninitSprite();
 
-	// ƒeƒNƒXƒ`ƒƒ‚Ì‘S‰ğ•ú
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®å…¨è§£æ”¾
 	UninitTexture();
 
 	UninitSound();
 
-	// “ü—Íˆ—‚ÌI—¹ˆ—
+	// å…¥åŠ›å‡¦ç†ã®çµ‚äº†å‡¦ç†
 	UninitInput();
 
-	// ƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌI—¹ˆ—
+	// ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ã®çµ‚äº†å‡¦ç†
 	UninitRenderer();
 }
 
 //=============================================================================
-// XVˆ—
+// æ›´æ–°å‡¦ç†
 //=============================================================================
 void Update(void)
 {
-	// “ü—Íˆ—‚ÌXVˆ—
+	// å…¥åŠ›å‡¦ç†ã®æ›´æ–°å‡¦ç†
 	UpdateInput();
 
 	UpdateInputPad();
@@ -320,25 +324,28 @@ void Update(void)
 }
 
 //=============================================================================
-// •`‰æˆ—
+// æç”»å‡¦ç†
 //=============================================================================
 void Draw(void)
 {
-	// ƒoƒbƒNƒoƒbƒtƒ@ƒNƒŠƒA
+	// ãƒãƒƒã‚¯ãƒãƒƒãƒ•ã‚¡ã‚¯ãƒªã‚¢
 	Clear();
 
-	// ƒ}ƒgƒŠƒNƒXİ’è
-	//SetWorldViewProjection2D();//À•W‚Ì2D•ÏŠ·
+	g_camera->UpdateCamera();
 
-	SetWorldMatrix();
+	// ãƒãƒˆãƒªã‚¯ã‚¹è¨­å®š
+	//SetWorldViewProjection2D();//åº§æ¨™ã®2Då¤‰æ›
 
-	// 2D•`‰æ‚È‚Ì‚Å[“x–³Œø
+	//SetWorldMatrix();
+
+
+	// 2Dæç”»ãªã®ã§æ·±åº¦ç„¡åŠ¹
 	SetDepthEnable(false);
 
 
 	g_Game.Draw();
 
-	// ƒoƒbƒNƒoƒbƒtƒ@Aƒtƒƒ“ƒgƒoƒbƒtƒ@“ü‚ê‘Ö‚¦
+	// ãƒãƒƒã‚¯ãƒãƒƒãƒ•ã‚¡ã€ãƒ•ãƒ­ãƒ³ãƒˆãƒãƒƒãƒ•ã‚¡å…¥ã‚Œæ›¿ãˆ
 	Present();
 }
 

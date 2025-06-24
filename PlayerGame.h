@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "StateBase.h"
 #include "GameObject.h"
@@ -9,10 +9,11 @@
 
 #include <chrono>
 
+class Player;
 class PlayerGame: public StateBase
 {
 public:
-	PlayerGame(std::string _key, GameObject* _obj)
+	PlayerGame(std::string _key, Player* _obj)
 		: StateBase(_key), obj(_obj) {}
 
 	void SetUp() override;
@@ -22,63 +23,97 @@ public:
 
 private:
 	void Jump();
+	void Move();
 	void ColidBlock();
 	void ColidLayer();
+	void ColidOverMap();
 	void ColidPush(GameObject* target, Pushed* pushed);
 	void ColidObject();
-	void ColidBlockLine();
 
-	GameObject* obj;
+	Player* obj;
 	D3DXVECTOR2 prevColidPos;
 	bool isDie = false;
 
 
 	ColiderPool* colidPool;
+
 	Damaged* damage;
 
 	std::chrono::milliseconds firstSec;
 	std::chrono::milliseconds prevFlash;
 	bool prevDamage;
 
+	// ã¤ã‹ã¿æ¡ˆå†…ç”¨ãƒ†ã‚¯ã‚¹ãƒãƒ£
+	unsigned int X_buttonTex;
+	const D3DXVECTOR2 pushAnounceSize = { 50.0f, 50.0f };
+	bool inPush = false;	// ç®±ã«è§¦ã‚Œã¦ã„ã‚‹ã‹
 
-	// ƒeƒNƒXƒ`ƒƒ
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£
 	unsigned int idleTex[2];
 	unsigned int runTex[2];
+	unsigned int walkTex[2];
+	unsigned int jumpTex[2];
+	unsigned int pushTex[2];
+	unsigned int circleTex;
 	int drawMode = 0;
-	
-	// ‘–‚è—pUV’l
-	float rU, rV, rUW, rVH;
 
-	// ƒAƒjƒ[ƒVƒ‡ƒ“—p
+	// ã™ãªã¼ã“ã‚Šãƒ†ã‚¯ã‚¹ãƒãƒ£
+	unsigned int dashSand[2];
+	unsigned int JumpSand[2];
+
+	unsigned int jumpSe;
+	unsigned int damageSe;
+	
+	// èµ°ã‚Šç”¨UVå€¤
+	float rU, rV, rUW, rVH;
+	D3DXVECTOR4 wUV, iUV, jUV, pUV;
+	int currentWalkTex;
+	int currentIdleTex;
+	int currentJumpTex;
+	int currentPushTex;
+
+	int frameCnt;
+	int dashCnt;
+
+
+	// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ç”¨
 	int currentRunTex = 0;
 
 	// font
 	FontData* debugData;
 	DirectWrite* write;
 
-	// ƒtƒ‰ƒO
+	// ãƒ•ãƒ©ã‚°
 	bool isGround;
 	bool isJump;
 	bool isGrab;
 	bool pushJumpKey;
 	bool pushGrabKey;
 	bool drawPlayer = true;
+	bool notCtrl = false;
 
-	// ”½“]—p‚É‘OƒtƒŒ[ƒ€‚Ì”½“]ó‹µ‚ğ•ÛŠÇ
+	// åè»¢ç”¨ã«å‰ãƒ•ãƒ¬ãƒ¼ãƒ ã®åè»¢çŠ¶æ³ã‚’ä¿ç®¡
 	bool prevHasSwap;
 	bool requestInputSwap = false;
 	bool prevInput = false;
 
-	// ƒWƒƒƒ“ƒv
+	// ã‚¸ãƒ£ãƒ³ãƒ—
 	int currentJumpFrame = 0;
 	static const int jumpFrame = 25;
-	const float maxJumpHeight = 13.0f;
+	const float maxJumpHeight = 15.0f;
 	float currentJumpHeight;
 
-	// ˆÚ“®
+	// ç§»å‹•
 	float moveDir = 1.0f;
 	float moveSign = 1.0f;
+	float pushDir = 1.0f;
 	bool isRun = false;
+	bool isWalk = false;
+	bool isIdle = false;
 
+	// å½“ãŸã‚Šåˆ¤å®šç”¨
+	const int COLID_CHECK_NUM = 20;
+	int colidCheckNum = 0;
+	float mapRightLimit = 0.0f;
 };
 

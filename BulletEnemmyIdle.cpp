@@ -1,17 +1,22 @@
-#include "BulletEnemmyIdle.h"
+ï»¿#include "BulletEnemmyIdle.h"
 #include "MainInGame.h"
 #include "sprite.h"
 #include "texture.h"
 #include "Player.h"
 #include "Camera.h"
 #include "OnGameData.h"
+#include "sound.h"
 
 void BulletEnemmyIdle::SetUp()
 {
 	CleanRequest();
 
-	tex[0] = LoadTexture((char*)"data/TEXTURE/Enemmy1.png");
+	tex[0] = LoadTexture((char*)"data/TEXTURE/flower.png");
 	tex[1] = LoadTexture((char*)"data/TEXTURE/Enemmy2.png");
+	idleTex[0] = LoadTexture((char*)"data/TEXTURE/flower_idle.png");
+	idleTex[1] = LoadTexture((char*)"data/TEXTURE/flower_idle_R.png");
+	attackTex[0] = LoadTexture((char*)"data/TEXTURE/flower_attack.png");
+	attackTex[1] = LoadTexture((char*)"data/TEXTURE/flower_attack_R.png");
 	drawMode = 0;
 
 	prevSwap = OnGameData::GetInstance()->HasSwap();
@@ -19,6 +24,15 @@ void BulletEnemmyIdle::SetUp()
 	obj->GetTransform()->SetGravity(0.0f);
 	obj->GetTransform()->SetRotation(0.0f);
 	obj->GetTransform()->SetRotationVel(0.0f);
+
+	shotSE = LoadSound((char*)"data/SE/flowerattck.wav");
+
+	isIdle = true;
+	frameCnt = 0;
+	idleFrame = 0;
+	shotFrame = 0;
+
+	startPosY = obj->GetTransform()->GetPos().y;
 }
 
 void BulletEnemmyIdle::CleanUp()
@@ -27,50 +41,102 @@ void BulletEnemmyIdle::CleanUp()
 
 void BulletEnemmyIdle::OnUpdate()
 {
-	if (prevSwap != OnGameData::GetInstance()->HasSwap())
+	if (!isDie)
 	{
-		drawMode = (drawMode + 1) % 2;
-		prevSwap = !prevSwap;
-	}
+		if (ColidBullet())
+		{
+			isDie = true;
+			obj->GetComponent<ColiderPool>()->GetColider()[0].SetTag("Death");
+			OnGameData::GetInstance()->AddScore(200);
+			OnGameData::GetInstance()->AddHitEnemyNum();
+			return;
+		}
 
-	if (isDie)return;
-	if (ColidBullet())
-	{
-		isDie = true;
-		MainInGame::objectPool.DeleteRequest(obj);
-		return;
-	}
+		// å¸¸ã«ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’å‘ã
+		Player* player = MainInGame::player;
+		if (player->GetTransform()->GetPos().x > obj->GetTransform()->GetPos().x)
+		{
+			shotDir = 1.0f;
+		}
+		else
+		{
+			shotDir = -1.0f;
+		}
 
-	// í‚ÉƒvƒŒƒCƒ„[‚ğŒü‚­
-	Player* player = MainInGame::player;
-	if (player->GetTransform()->GetPos().x > obj->GetTransform()->GetPos().x)
-	{
-		shotDir = 1.0f;
-	}
-	else
-	{
-		shotDir = -1.0f;
-	}
+		shotFrameCount++;
 
-	Shot();
+		// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³
+		if (shotFrameCount >= BULLET_ENEMY_SHOT_FRAME - 40)
+		{
+			idleFrame = 0;
+
+			if (isIdle)
+			{
+				frameCnt = 0;
+				isIdle = false;
+			}
+			++frameCnt;
+			if (frameCnt % 4 == 0) ++shotFrame;
+
+			uv.x = (float)((shotFrame % idleX) * (1.0f / idleX));
+			uv.y = (float)((shotFrame / idleX) * (1.0f / attackY));
+			uv.z = (float)1.0f / idleX;
+			uv.w = (float)1.0f / attackY;
+		}
+		else
+		{
+			shotFrame = 0;
+
+			if (!isIdle)
+			{
+				frameCnt = 0;
+				isIdle = true;
+			}
+			++frameCnt;
+			if (frameCnt % 4 == 0)++idleFrame;
+
+			uv.x = (float)((idleFrame % idleX) * (1.0f / idleX));
+			uv.y = (float)((idleFrame / idleX) * (1.0f / idleY));
+			uv.z = (float)1.0f / idleX;
+			uv.w = (float)1.0f / idleY;
+		}
+
+		ColidPlayer();
+		Shot();
+	}
+	DeathRendition();
 }
 
 void BulletEnemmyIdle::OnDraw()
 {
-	if (isDie)return;
+	drawMode = OnGameData::GetInstance()->HasSwap() ? 1 : 0;
 	D3DXVECTOR2 pos = obj->GetTransform()->GetPos();
+	D3DXVECTOR2 size = obj->GetTransform()->GetSize();
 	D3DXVECTOR2 cameraPos = Camera::GetInstance()->GetOriginPos();
 
 	D3DXVECTOR2 drawPos = pos - cameraPos;
 
 	//obj->GetColider()[0].viewColid(D3DXCOLOR(0.0f, 1.0f, 0.0f, 0.3f));
-
-	DrawSpriteColor(tex[drawMode],
-		drawPos.x, drawPos.y,
-		obj->GetTransform()->GetSize().x, obj->GetTransform()->GetSize().y,
-		0.0f, 0.0f,
-		1.0f * (-1.0f * shotDir), 1.0f,
-		1.0f, 1.0f, 1.0f, 1.0f);
+	int revarse = 1;
+	if (drawMode == 1) revarse = -1;
+	if (isIdle)
+	{
+		DrawSpriteColorRotate(idleTex[drawMode],
+			drawPos.x, drawPos.y,
+			size.x, size.y,
+			uv.x, uv.y,
+			uv.z * -shotDir* revarse, uv.w,
+			1.0f, 1.0f, 1.0f, 1.0f, dieRot * 2.0f);
+	}
+	else
+	{
+		DrawSpriteColorRotate(attackTex[drawMode],
+			drawPos.x, drawPos.y,
+			obj->GetTransform()->GetSize().x, obj->GetTransform()->GetSize().y,
+			uv.x, uv.y,
+			uv.z * -shotDir* revarse, uv.w,
+			1.0f, 1.0f, 1.0f, 1.0f, dieRot * 2.0f);
+	}
 }
 
 bool BulletEnemmyIdle::ColidBullet()
@@ -91,7 +157,7 @@ bool BulletEnemmyIdle::ColidBullet()
 
 		if (obj->GetComponent<ColiderPool>()->GetColider()[0].IsColid(objColid[0]))
 		{
-			// ’e‚ÌÁ‹
+			// å¼¾ã®æ¶ˆå»
 			MainInGame::objectPool.DeleteRequest(gameObj);
 			return true;
 		}
@@ -102,8 +168,8 @@ bool BulletEnemmyIdle::ColidBullet()
 
 void BulletEnemmyIdle::Shot()
 {
-	// ’e‚ªo‚Ä‚¢‚éê‡‚Í‚»‚êˆÈã”­Ë‚µ‚È‚¢
-	if (bullet != nullptr) return;
+	//180fã”ã¨ã«ç™ºå°„
+	if (shotFrameCount < BULLET_ENEMY_SHOT_FRAME)return;
 	Transform2D* transform = obj->GetTransform();
 	Player* player = MainInGame::player;
 	D3DXVECTOR2 playerPos = player->GetTransform()->GetPos();
@@ -111,17 +177,56 @@ void BulletEnemmyIdle::Shot()
 
 	float height = transform->GetPos().y - shotHeight;
 
-	// ƒvƒŒƒCƒ„[‚ÌˆÊ’u‚ÌŠm”F
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®ä½ç½®ã®ç¢ºèª
+	D3DXVECTOR2 bulletPos = D3DXVECTOR2(transform->GetPos().x + (75.0f * shotDir), height);
+
+	// å¼¾ã®ç”Ÿæˆ
+	Bullet* generate = new Bullet(&bullet ,bulletPos, bulletSize, bulletVel * shotDir);
+	bullet = generate;
+	bullet->Start();
+
+	MainInGame::objectPool.Add(bullet);
+
+	shotFrameCount = 0;
+
 	if (playerPos.y - playerSize.y / 2 <= height && height <= playerPos.y + playerSize.y / 2
 		&& fabsf(playerPos.x - transform->GetPos().x) <= 900.0f)
 	{
-		D3DXVECTOR2 bulletPos = D3DXVECTOR2(transform->GetPos().x + (75.0f * shotDir), height);
+		PlaySound(shotSE, 0);
+	}
+}
 
-		// ’e‚Ì¶¬
-		Bullet* generate = new Bullet(&bullet ,bulletPos, bulletSize, bulletVel * shotDir);
-		bullet = generate;
-		bullet->Start();
+void BulletEnemmyIdle::ColidPlayer()
+{
+	Player* player = MainInGame::player;
+	float PlayerBottom = player->GetTransform()->GetPos().y + (player->GetTransform()->GetSize().y / 2);
 
-		MainInGame::objectPool.Add(bullet);
+	Colider2D colid = obj->GetComponent<ColiderPool>()->GetColider()[0];
+	Colider2D playerColid = MainInGame::player->GetComponent<ColiderPool>()->GetColider()[0];
+
+	if (colid.IsColid(playerColid))
+	{
+		MainInGame::player->GetComponent<Damaged>()->Damage(1);
+	}
+}
+
+void BulletEnemmyIdle::DeathRendition()
+{
+	if (!isDie)return;
+	dieRot += 3.14f / 180 * 6;
+	int revarse = 1;
+	D3DXVECTOR2 pos = obj->GetTransform()->GetPos();
+	if (shotDir < 0)revarse = -1;
+	if (dieRot < 3.14f)
+	{
+		obj->GetTransform()->SetPos(pos.x + cos(dieRot + 1.57f) * 4.0f * revarse, pos.y + sin(dieRot + 4.71f) * 10.0f);
+	}
+	else
+	{
+		obj->GetTransform()->SetPos(pos.x - 2.0f * revarse, pos.y + dieRot * 3.5f);
+	}
+	if (obj->GetTransform()->GetPos().y - startPosY >= 2000.0f)
+	{
+		MainInGame::objectPool.DeleteRequest(obj);
 	}
 }

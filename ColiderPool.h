@@ -18,6 +18,10 @@ public:
 		pool.push_back(add);
 	}
 
+	void Clear() {
+		pool.clear();
+	}
+
 	std::vector<Colider2D>& GetColider() {
 		return pool;
 	}

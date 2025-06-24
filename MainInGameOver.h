@@ -11,11 +11,11 @@
 #include "StateBase.h"
 #include "main.h"
 
-class MainGameOver : public StateBase
+class MainGameOver : public MountStateBase
 {
 public:
 	MainGameOver(std::string _key)
-		: StateBase(_key){}
+		: MountStateBase(_key){}
 
 	void SetUp() override;
 	void CleanUp() override;
@@ -24,13 +24,36 @@ public:
 
 private:
 
+	int frameCnt = 0;
+
 	unsigned int BG_tex;
 	unsigned int retryButton_tex;
 	unsigned int returnButton_tex;
-	unsigned int OverBG_tex;
+	unsigned int gameOverTex;
+	unsigned int gameOverFontTex;
+	unsigned int retryTex;
+	unsigned int titleTex;
+	unsigned int BbuttonTex;
+	unsigned int buttonFrame;
+	const int gameOverX = 5;
+	const int gameOverY = 3;
+	const int allTex = 11;
+	int currentFrame = 0;
+	const int speed = 5;
+	float alpha = 1.0f;
+	bool isSelect = false;
+	int selectNum = 0;
+
+	// BGM
+	unsigned int BGM;
+
+	bool isAnimeEnd = false;
+
+	D3DXVECTOR4 gameOverUV;
 
 	D3DXVECTOR2 buttonPos[2];
 	D3DXVECTOR2 buttonSize;
+	D3DXVECTOR2 playerPos;
 
 	int currentButtonPos = 0;
 };

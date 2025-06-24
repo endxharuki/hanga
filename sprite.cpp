@@ -1,6 +1,6 @@
-//=============================================================================
+ï»¿//=============================================================================
 //
-// ƒXƒvƒ‰ƒCƒgˆ— [sprite.cpp]
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆå‡¦ç† [sprite.cpp]
 // Author : 
 //
 //=============================================================================
@@ -8,33 +8,36 @@
 #include "renderer.h"
 #include "texture.h"
 #include "OnGameData.h"
+#include "Camera.h"
 
 //*****************************************************************************
-// ƒ}ƒNƒ’è‹`
+// ãƒžã‚¯ãƒ­å®šç¾©
 //*****************************************************************************
-#define NUM_VERTEX 4	//•K—v‚È’¸“_‚Ì”
-
-
-//*****************************************************************************
-// ƒvƒƒgƒ^ƒCƒvéŒ¾
-//*****************************************************************************
+#define NUM_VERTEX 4	//å¿…è¦ãªé ‚ç‚¹ã®æ•°
 
 
 //*****************************************************************************
-// ƒOƒ[ƒoƒ‹•Ï”
+// ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€
 //*****************************************************************************
-static ID3D11Buffer				*g_VertexBuffer = NULL;	// ’¸“_î•ñ
+
+
+//*****************************************************************************
+// ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°
+//*****************************************************************************
+static ID3D11Buffer				*g_VertexBuffer = NULL;	// é ‚ç‚¹æƒ…å ±
 static OnGameData* g_GameData = OnGameData::GetInstance();
+static Camera* g_Camera = Camera::GetInstance();
+
 
 
 //=============================================================================
-// ‰Šú‰»ˆ—
+// åˆæœŸåŒ–å‡¦ç†
 //=============================================================================
 void InitSprite(void)
 {
 	ID3D11Device *pDevice = GetDevice();
 
-	// ’¸“_ƒoƒbƒtƒ@¶¬
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ç”Ÿæˆ
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DYNAMIC;
@@ -42,14 +45,22 @@ void InitSprite(void)
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	pDevice->CreateBuffer(&bd, NULL, &g_VertexBuffer);
+
+	// ãƒžã‚¹ã‚¯ãƒªã‚½ãƒ¼ã‚¹è¨­å®š
+	UINT stride = sizeof(VERTEX_3D);
+	UINT offset = 0;
+	GetDeviceContext()->IASetVertexBuffers(1, 1, &g_VertexBuffer, &stride, &offset);
+
+	unsigned int mask = LoadTexture((char*)"data/TEXTURE/mask.png");
+	GetDeviceContext()->PSSetShaderResources(1, 1, GetTexture(mask));
 }
 
 //=============================================================================
-// I—¹ˆ—
+// çµ‚äº†å‡¦ç†
 //=============================================================================
 void UninitSprite(void)
 {
-	// ’¸“_ƒoƒbƒtƒ@‚Ì‰ð•ú
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã®è§£æ”¾
 	if (g_VertexBuffer)
 	{
 		g_VertexBuffer->Release();
@@ -58,19 +69,19 @@ void UninitSprite(void)
 }
 
 //=============================================================================
-// ƒXƒvƒ‰ƒCƒgƒf[ƒ^Ý’è
-// À•WEƒTƒCƒYEUVŽw’è
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆãƒ‡ãƒ¼ã‚¿è¨­å®š
+// åº§æ¨™ãƒ»ã‚µã‚¤ã‚ºãƒ»UVæŒ‡å®š
 //=============================================================================
-//ˆø”
-//texNo : ƒeƒNƒXƒ`ƒƒ‚ÌŽ¯•Ê”Ô†itexture.h, texture.cpp ‚ÌLoadTextureŠÖ”‚Ì–ß‚è’lj
-//X     : XÀ•WiƒXƒvƒ‰ƒCƒg‚Ì’†S“_j
-//Y		: YÀ•WiƒXƒvƒ‰ƒCƒg‚Ì’†S“_j
-//Width : ‰¡•
-//Height: ‚‚³
-//U		: UV’lŽn“_
-//V		: UV’lŽn“_
-//UW	: UV’l‰¡•
-//VH	: UV’l‚‚³
+//å¼•æ•°
+//texNo : ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è­˜åˆ¥ç•ªå·ï¼ˆtexture.h, texture.cpp ã®LoadTextureé–¢æ•°ã®æˆ»ã‚Šå€¤ï¼‰
+//X     : Xåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Y		: Yåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Width : æ¨ªå¹…
+//Height: é«˜ã•
+//U		: UVå€¤å§‹ç‚¹
+//V		: UVå€¤å§‹ç‚¹
+//UW	: UVå€¤æ¨ªå¹…
+//VH	: UVå€¤é«˜ã•
 void DrawSprite(int texNo, float X, float Y, float Width, float Height, float U, float V, float UW, float VH)
 {
 	D3D11_MAPPED_SUBRESOURCE msr;
@@ -82,46 +93,48 @@ void DrawSprite(int texNo, float X, float Y, float Width, float Height, float U,
 	hw = Width * 0.5f;
 	hh = Height * 0.5f;
 
-	if (g_GameData->HasSwap())
+	
+
+	if (g_Camera->IsSwap())
 	{
-		// ’¸“_‚O”Ôi¶ã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼ç•ªï¼ˆå·¦ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[1].Position = D3DXVECTOR3(X - hw, Y - hh, 0.0f);
 		vertex[1].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[1].TexCoord = D3DXVECTOR2(U, V);
 
-		// ’¸“_‚P”Ôi‰Eã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼‘ç•ªï¼ˆå³ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[0].Position = D3DXVECTOR3(X + hw, Y - hh, 0.0f);
 		vertex[0].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[0].TexCoord = D3DXVECTOR2(U + UW, V);
 
-		// ’¸“_‚Q”Ôi¶‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼’ç•ªï¼ˆå·¦ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[3].Position = D3DXVECTOR3(X - hw, Y + hh, 0.0f);
 		vertex[3].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[3].TexCoord = D3DXVECTOR2(U, V + VH);
 
-		// ’¸“_‚R”Ôi‰E‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼“ç•ªï¼ˆå³ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[2].Position = D3DXVECTOR3(X + hw, Y + hh, 0.0f);
 		vertex[2].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[2].TexCoord = D3DXVECTOR2(U + UW, V + VH);
 	}
 	else
 	{
-		// ’¸“_‚O”Ôi¶ã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼ç•ªï¼ˆå·¦ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[0].Position = D3DXVECTOR3(X - hw, Y - hh, 0.0f);
 		vertex[0].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[0].TexCoord = D3DXVECTOR2(U, V);
 
-		// ’¸“_‚P”Ôi‰Eã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼‘ç•ªï¼ˆå³ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[1].Position = D3DXVECTOR3(X + hw, Y - hh, 0.0f);
 		vertex[1].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[1].TexCoord = D3DXVECTOR2(U + UW, V);
 
-		// ’¸“_‚Q”Ôi¶‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼’ç•ªï¼ˆå·¦ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[2].Position = D3DXVECTOR3(X - hw, Y + hh, 0.0f);
 		vertex[2].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[2].TexCoord = D3DXVECTOR2(U, V + VH);
 
-		// ’¸“_‚R”Ôi‰E‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼“ç•ªï¼ˆå³ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[3].Position = D3DXVECTOR3(X + hw, Y + hh, 0.0f);
 		vertex[3].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[3].TexCoord = D3DXVECTOR2(U + UW, V + VH);
@@ -129,35 +142,35 @@ void DrawSprite(int texNo, float X, float Y, float Width, float Height, float U,
 
 	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
 
-	// ’¸“_ƒoƒbƒtƒ@Ý’è
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	UINT stride = sizeof(VERTEX_3D);
 	UINT offset = 0;
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-	// ƒvƒŠƒ~ƒeƒBƒuƒgƒ|ƒƒWÝ’è
+	// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
 	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// ƒeƒNƒXƒ`ƒƒÝ’è
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
 	GetDeviceContext()->PSSetShaderResources(0, 1, GetTexture(texNo));
 
-	// ƒ|ƒŠƒSƒ“•`‰æ
+	// ãƒãƒªã‚´ãƒ³æç”»
 	GetDeviceContext()->Draw(NUM_VERTEX, 0);
 }
 
 //=============================================================================
-// ƒXƒvƒ‰ƒCƒgƒf[ƒ^Ý’èi¶ãŽw’èj
-// À•WEƒTƒCƒYEUVŽw’è
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆãƒ‡ãƒ¼ã‚¿è¨­å®šï¼ˆå·¦ä¸ŠæŒ‡å®šï¼‰
+// åº§æ¨™ãƒ»ã‚µã‚¤ã‚ºãƒ»UVæŒ‡å®š
 //=============================================================================
-//ˆø”
-//texNo : ƒeƒNƒXƒ`ƒƒ‚ÌŽ¯•Ê”Ô†itexture.h, texture.cpp ‚ÌLoadTextureŠÖ”‚Ì–ß‚è’lj
-//X     : XÀ•WiƒXƒvƒ‰ƒCƒg‚Ì¶ãj
-//Y		: YÀ•WiƒXƒvƒ‰ƒCƒg‚Ì¶ãj
-//Width : ‰¡•
-//Height: ‚‚³
-//U		: UV’lŽn“_
-//V		: UV’lŽn“_
-//UW	: UV’l‰¡•
-//VH	: UV’l‚‚³
+//å¼•æ•°
+//texNo : ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è­˜åˆ¥ç•ªå·ï¼ˆtexture.h, texture.cpp ã®LoadTextureé–¢æ•°ã®æˆ»ã‚Šå€¤ï¼‰
+//X     : Xåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®å·¦ä¸Šï¼‰
+//Y		: Yåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®å·¦ä¸Šï¼‰
+//Width : æ¨ªå¹…
+//Height: é«˜ã•
+//U		: UVå€¤å§‹ç‚¹
+//V		: UVå€¤å§‹ç‚¹
+//UW	: UVå€¤æ¨ªå¹…
+//VH	: UVå€¤é«˜ã•
 void DrawSpriteLeftTop(int texNo, float X, float Y, float Width, float Height, float U, float V, float UW, float VH)
 {
 	D3D11_MAPPED_SUBRESOURCE msr;
@@ -166,9 +179,9 @@ void DrawSpriteLeftTop(int texNo, float X, float Y, float Width, float Height, f
 	VERTEX_3D *vertex = (VERTEX_3D*)msr.pData;
 
 
-	if (g_GameData->HasSwap())
+	if (g_Camera->IsSwap())
 	{
-		// ¶ã‚ðŒ´“_‚Æ‚µ‚ÄÝ’è‚·‚éƒvƒƒOƒ‰ƒ€
+		// å·¦ä¸Šã‚’åŽŸç‚¹ã¨ã—ã¦è¨­å®šã™ã‚‹ãƒ—ãƒ­ã‚°ãƒ©ãƒ 
 		vertex[1].Position = D3DXVECTOR3(X, Y, 0.0f);
 		vertex[1].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[1].TexCoord = D3DXVECTOR2(U, V);
@@ -187,7 +200,7 @@ void DrawSpriteLeftTop(int texNo, float X, float Y, float Width, float Height, f
 	}
 	else
 	{
-		// ¶ã‚ðŒ´“_‚Æ‚µ‚ÄÝ’è‚·‚éƒvƒƒOƒ‰ƒ€
+		// å·¦ä¸Šã‚’åŽŸç‚¹ã¨ã—ã¦è¨­å®šã™ã‚‹ãƒ—ãƒ­ã‚°ãƒ©ãƒ 
 		vertex[0].Position = D3DXVECTOR3(X, Y, 0.0f);
 		vertex[0].Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 		vertex[0].TexCoord = D3DXVECTOR2(U, V);
@@ -207,18 +220,18 @@ void DrawSpriteLeftTop(int texNo, float X, float Y, float Width, float Height, f
 
 	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
 
-	// ’¸“_ƒoƒbƒtƒ@Ý’è
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	UINT stride = sizeof(VERTEX_3D);
 	UINT offset = 0;
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-	// ƒvƒŠƒ~ƒeƒBƒuƒgƒ|ƒƒWÝ’è
+	// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
 	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// ƒeƒNƒXƒ`ƒƒÝ’è
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
 	GetDeviceContext()->PSSetShaderResources(0, 1, GetTexture(texNo));
 
-	// ƒ|ƒŠƒSƒ“•`‰æ
+	// ãƒãƒªã‚´ãƒ³æç”»
 	GetDeviceContext()->Draw(NUM_VERTEX, 0);
 }
 
@@ -231,7 +244,7 @@ void DrawSpriteLeftTopColor(int texNo, float x, float y, float width, float heig
 
 	D3DXCOLOR color = D3DXCOLOR(r, g, b, a);
 
-	// ¶ã‚ðŒ´“_‚Æ‚µ‚ÄÝ’è‚·‚éƒvƒƒOƒ‰ƒ€
+	// å·¦ä¸Šã‚’åŽŸç‚¹ã¨ã—ã¦è¨­å®šã™ã‚‹ãƒ—ãƒ­ã‚°ãƒ©ãƒ 
 	vertex[0].Position = D3DXVECTOR3(x, y, 0.0f);
 	vertex[0].Diffuse = color;
 	vertex[0].TexCoord = D3DXVECTOR2(U, V);
@@ -250,37 +263,37 @@ void DrawSpriteLeftTopColor(int texNo, float x, float y, float width, float heig
 
 	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
 
-	// ’¸“_ƒoƒbƒtƒ@Ý’è
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	UINT stride = sizeof(VERTEX_3D);
 	UINT offset = 0;
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-	// ƒvƒŠƒ~ƒeƒBƒuƒgƒ|ƒƒWÝ’è
+	// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
 	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// ƒeƒNƒXƒ`ƒƒÝ’è
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
 	GetDeviceContext()->PSSetShaderResources(0, 1, GetTexture(texNo));
 
-	// ƒ|ƒŠƒSƒ“•`‰æ
+	// ãƒãƒªã‚´ãƒ³æç”»
 	GetDeviceContext()->Draw(NUM_VERTEX, 0);
 }
 
 
 //=============================================================================
-// ƒXƒvƒ‰ƒCƒgƒf[ƒ^Ý’è
-// À•WEƒTƒCƒYEUVŽw’èE’¸“_F
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆãƒ‡ãƒ¼ã‚¿è¨­å®š
+// åº§æ¨™ãƒ»ã‚µã‚¤ã‚ºãƒ»UVæŒ‡å®šãƒ»é ‚ç‚¹è‰²
 //=============================================================================
-//ˆø”
-//texNo : ƒeƒNƒXƒ`ƒƒ‚ÌŽ¯•Ê”Ô†itexture.h, texture.cpp ‚ÌLoadTextureŠÖ”‚Ì–ß‚è’lj
-//X     : XÀ•WiƒXƒvƒ‰ƒCƒg‚Ì’†S“_j
-//Y		: YÀ•WiƒXƒvƒ‰ƒCƒg‚Ì’†S“_j
-//Width : ‰¡•
-//Height: ‚‚³
-//U		: UV’lŽn“_
-//V		: UV’lŽn“_
-//UW	: UV’l‰¡•
-//VH	: UV’l‚‚³
-//color : ’¸“_‚ÌFiRGBAj
+//å¼•æ•°
+//texNo : ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è­˜åˆ¥ç•ªå·ï¼ˆtexture.h, texture.cpp ã®LoadTextureé–¢æ•°ã®æˆ»ã‚Šå€¤ï¼‰
+//X     : Xåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Y		: Yåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Width : æ¨ªå¹…
+//Height: é«˜ã•
+//U		: UVå€¤å§‹ç‚¹
+//V		: UVå€¤å§‹ç‚¹
+//UW	: UVå€¤æ¨ªå¹…
+//VH	: UVå€¤é«˜ã•
+//color : é ‚ç‚¹ã®è‰²ï¼ˆRGBAï¼‰
 void DrawSpriteColor(int texNo, float X, float Y, float Width, float Height,
 		float U, float V, float UW, float VH,
 		float r, float g, float b, float a)
@@ -296,46 +309,46 @@ void DrawSpriteColor(int texNo, float X, float Y, float Width, float Height,
 
 	D3DXCOLOR Color(r, g, b, a);
 
-	if (g_GameData->HasSwap())
+	if (g_Camera->IsSwap())
 	{
-		// ’¸“_‚O”Ôi¶ã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼ç•ªï¼ˆå·¦ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[1].Position = D3DXVECTOR3(X - hw, Y - hh, 0.0f);
 		vertex[1].Diffuse = Color;
 		vertex[1].TexCoord = D3DXVECTOR2(U, V);
 
-		// ’¸“_‚P”Ôi‰Eã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼‘ç•ªï¼ˆå³ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[0].Position = D3DXVECTOR3(X + hw, Y - hh, 0.0f);
 		vertex[0].Diffuse = Color;
 		vertex[0].TexCoord = D3DXVECTOR2(U + UW, V);
 
-		// ’¸“_‚Q”Ôi¶‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼’ç•ªï¼ˆå·¦ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[3].Position = D3DXVECTOR3(X - hw, Y + hh, 0.0f);
 		vertex[3].Diffuse = Color;
 		vertex[3].TexCoord = D3DXVECTOR2(U, V + VH);
 
-		// ’¸“_‚R”Ôi‰E‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼“ç•ªï¼ˆå³ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[2].Position = D3DXVECTOR3(X + hw, Y + hh, 0.0f);
 		vertex[2].Diffuse = Color;
 		vertex[2].TexCoord = D3DXVECTOR2(U + UW, V + VH);
 	}
 	else
 	{
-		// ’¸“_‚O”Ôi¶ã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼ç•ªï¼ˆå·¦ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[0].Position = D3DXVECTOR3(X - hw, Y - hh, 0.0f);
 		vertex[0].Diffuse = Color;
 		vertex[0].TexCoord = D3DXVECTOR2(U, V);
 
-		// ’¸“_‚P”Ôi‰Eã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼‘ç•ªï¼ˆå³ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[1].Position = D3DXVECTOR3(X + hw, Y - hh, 0.0f);
 		vertex[1].Diffuse = Color;
 		vertex[1].TexCoord = D3DXVECTOR2(U + UW, V);
 
-		// ’¸“_‚Q”Ôi¶‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼’ç•ªï¼ˆå·¦ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[2].Position = D3DXVECTOR3(X - hw, Y + hh, 0.0f);
 		vertex[2].Diffuse = Color;
 		vertex[2].TexCoord = D3DXVECTOR2(U, V + VH);
 
-		// ’¸“_‚R”Ôi‰E‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼“ç•ªï¼ˆå³ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[3].Position = D3DXVECTOR3(X + hw, Y + hh, 0.0f);
 		vertex[3].Diffuse = Color;
 		vertex[3].TexCoord = D3DXVECTOR2(U + UW, V + VH);
@@ -343,34 +356,34 @@ void DrawSpriteColor(int texNo, float X, float Y, float Width, float Height,
 
 	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
 
-	// ’¸“_ƒoƒbƒtƒ@Ý’è
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	UINT stride = sizeof(VERTEX_3D);
 	UINT offset = 0;
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-	// ƒvƒŠƒ~ƒeƒBƒuƒgƒ|ƒƒWÝ’è
+	// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
 	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// ƒeƒNƒXƒ`ƒƒÝ’è
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
 	GetDeviceContext()->PSSetShaderResources(0, 1, GetTexture(texNo));
 
-	// ƒ|ƒŠƒSƒ“•`‰æ
+	// ãƒãƒªã‚´ãƒ³æç”»
 	GetDeviceContext()->Draw(NUM_VERTEX, 0);
 }
 
 
 //=============================================================================
-// ƒXƒvƒ‰ƒCƒgƒf[ƒ^Ý’è
-// ’¸“_À•WŽw’èEUVŽw’èE’¸“_F
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆãƒ‡ãƒ¼ã‚¿è¨­å®š
+// é ‚ç‚¹åº§æ¨™æŒ‡å®šãƒ»UVæŒ‡å®šãƒ»é ‚ç‚¹è‰²
 //=============================================================================
-//ˆø”
-//texNo : ƒeƒNƒXƒ`ƒƒ‚ÌŽ¯•Ê”Ô†itexture.h, texture.cpp ‚ÌLoadTextureŠÖ”‚Ì–ß‚è’lj
-//vtx	: ’ZŒa‚ð\¬‚·‚é’¸“_
-//U		: UV’lŽn“_
-//V		: UV’lŽn“_
-//UW	: UV’l‰¡•
-//VH	: UV’l‚‚³
-//color : ’¸“_‚ÌFiRGBAj
+//å¼•æ•°
+//texNo : ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è­˜åˆ¥ç•ªå·ï¼ˆtexture.h, texture.cpp ã®LoadTextureé–¢æ•°ã®æˆ»ã‚Šå€¤ï¼‰
+//vtx	: çŸ­å¾„ã‚’æ§‹æˆã™ã‚‹é ‚ç‚¹
+//U		: UVå€¤å§‹ç‚¹
+//V		: UVå€¤å§‹ç‚¹
+//UW	: UVå€¤æ¨ªå¹…
+//VH	: UVå€¤é«˜ã•
+//color : é ‚ç‚¹ã®è‰²ï¼ˆRGBAï¼‰
 void DrawSpriteVtxSetColor(int texNo, D3DXVECTOR2* vtx,
 	float U, float V, float UW, float VH,
 	float r, float g, float b, float a)
@@ -382,46 +395,46 @@ void DrawSpriteVtxSetColor(int texNo, D3DXVECTOR2* vtx,
 
 	D3DXCOLOR Color(r, g, b, a);
 
-	if (g_GameData->HasSwap())
+	if (g_Camera->IsSwap())
 	{
-		// ’¸“_‚O”Ôi¶ã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼ç•ªï¼ˆå·¦ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[1].Position = D3DXVECTOR3(vtx[0].x, vtx[0].y, 0.0f);
 		vertex[1].Diffuse = Color;
 		vertex[1].TexCoord = D3DXVECTOR2(U, V);
 
-		// ’¸“_‚P”Ôi‰Eã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼‘ç•ªï¼ˆå³ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[0].Position = D3DXVECTOR3(vtx[1].x, vtx[1].y, 0.0f);
 		vertex[0].Diffuse = Color;
 		vertex[0].TexCoord = D3DXVECTOR2(U + UW, V);
 
-		// ’¸“_‚Q”Ôi¶‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼’ç•ªï¼ˆå·¦ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[3].Position = D3DXVECTOR3(vtx[2].x, vtx[2].y, 0.0f);
 		vertex[3].Diffuse = Color;
 		vertex[3].TexCoord = D3DXVECTOR2(U, V + VH);
 
-		// ’¸“_‚R”Ôi‰E‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼“ç•ªï¼ˆå³ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[2].Position = D3DXVECTOR3(vtx[3].x, vtx[3].y, 0.0f);
 		vertex[2].Diffuse = Color;
 		vertex[2].TexCoord = D3DXVECTOR2(U + UW, V + VH);
 	}
 	else
 	{
-		// ’¸“_‚O”Ôi¶ã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼ç•ªï¼ˆå·¦ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[0].Position = D3DXVECTOR3(vtx[0].x, vtx[0].y, 0.0f);
 		vertex[0].Diffuse = Color;
 		vertex[0].TexCoord = D3DXVECTOR2(U, V);
 
-		// ’¸“_‚P”Ôi‰Eã‚Ì’¸“_j
+		// é ‚ç‚¹ï¼‘ç•ªï¼ˆå³ä¸Šã®é ‚ç‚¹ï¼‰
 		vertex[1].Position = D3DXVECTOR3(vtx[1].x, vtx[1].y, 0.0f);
 		vertex[1].Diffuse = Color;
 		vertex[1].TexCoord = D3DXVECTOR2(U + UW, V);
 
-		// ’¸“_‚Q”Ôi¶‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼’ç•ªï¼ˆå·¦ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[2].Position = D3DXVECTOR3(vtx[2].x, vtx[2].y, 0.0f);
 		vertex[2].Diffuse = Color;
 		vertex[2].TexCoord = D3DXVECTOR2(U, V + VH);
 
-		// ’¸“_‚R”Ôi‰E‰º‚Ì’¸“_j
+		// é ‚ç‚¹ï¼“ç•ªï¼ˆå³ä¸‹ã®é ‚ç‚¹ï¼‰
 		vertex[3].Position = D3DXVECTOR3(vtx[3].x, vtx[3].y, 0.0f);
 		vertex[3].Diffuse = Color;
 		vertex[3].TexCoord = D3DXVECTOR2(U + UW, V + VH);
@@ -429,38 +442,38 @@ void DrawSpriteVtxSetColor(int texNo, D3DXVECTOR2* vtx,
 
 	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
 
-	// ’¸“_ƒoƒbƒtƒ@Ý’è
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	UINT stride = sizeof(VERTEX_3D);
 	UINT offset = 0;
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-	// ƒvƒŠƒ~ƒeƒBƒuƒgƒ|ƒƒWÝ’è
+	// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
 	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// ƒeƒNƒXƒ`ƒƒÝ’è
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
 	GetDeviceContext()->PSSetShaderResources(0, 1, GetTexture(texNo));
 
-	// ƒ|ƒŠƒSƒ“•`‰æ
+	// ãƒãƒªã‚´ãƒ³æç”»
 	GetDeviceContext()->Draw(NUM_VERTEX, 0);
 }
 
 
 //=============================================================================
-// ƒXƒvƒ‰ƒCƒgƒf[ƒ^Ý’è
-// À•WEƒTƒCƒYEUVŽw’èE’¸“_FE‰ñ“]Šp“x
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆãƒ‡ãƒ¼ã‚¿è¨­å®š
+// åº§æ¨™ãƒ»ã‚µã‚¤ã‚ºãƒ»UVæŒ‡å®šãƒ»é ‚ç‚¹è‰²ãƒ»å›žè»¢è§’åº¦
 //=============================================================================
-//ˆø”
-//texNo : ƒeƒNƒXƒ`ƒƒ‚ÌŽ¯•Ê”Ô†itexture.h, texture.cpp ‚ÌLoadTextureŠÖ”‚Ì–ß‚è’lj
-//X     : XÀ•WiƒXƒvƒ‰ƒCƒg‚Ì’†S“_j
-//Y		: YÀ•WiƒXƒvƒ‰ƒCƒg‚Ì’†S“_j
-//Width : ‰¡•
-//Height: ‚‚³
-//U		: UV’lŽn“_
-//V		: UV’lŽn“_
-//UW	: UV’l‰¡•
-//VH	: UV’l‚‚³
-//color : ’¸“_‚ÌFiRGBAj
-//Rot	: ‰ñ“]Šp“xiƒ‰ƒWƒAƒ“’lj
+//å¼•æ•°
+//texNo : ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è­˜åˆ¥ç•ªå·ï¼ˆtexture.h, texture.cpp ã®LoadTextureé–¢æ•°ã®æˆ»ã‚Šå€¤ï¼‰
+//X     : Xåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Y		: Yåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Width : æ¨ªå¹…
+//Height: é«˜ã•
+//U		: UVå€¤å§‹ç‚¹
+//V		: UVå€¤å§‹ç‚¹
+//UW	: UVå€¤æ¨ªå¹…
+//VH	: UVå€¤é«˜ã•
+//color : é ‚ç‚¹ã®è‰²ï¼ˆRGBAï¼‰
+//Rot	: å›žè»¢è§’åº¦ï¼ˆãƒ©ã‚¸ã‚¢ãƒ³å€¤ï¼‰
 void DrawSpriteColorRotate(int texNo, float X, float Y, float Width, float Height,
 	float U, float V, float UW, float VH,
 	float r, float g, float b, float a, float Rot)
@@ -474,9 +487,9 @@ void DrawSpriteColorRotate(int texNo, float X, float Y, float Width, float Heigh
 	hw = Width * 0.5f;
 	hh = Height * 0.5f;
 
-	if (g_GameData->HasSwap())
+	if (g_Camera->IsSwap())
 	{
-		// À•W•ÏŠ·
+		// åº§æ¨™å¤‰æ›
 		vertex[1].Position.x = (-hw) * cosf(Rot) - (-hh) * sinf(Rot) + X;
 		vertex[1].Position.y = (-hw) * sinf(Rot) + (-hh) * cosf(Rot) + Y;
 		vertex[0].Position.x = (hw)*cosf(Rot) - (-hh) * sinf(Rot) + X;
@@ -488,7 +501,7 @@ void DrawSpriteColorRotate(int texNo, float X, float Y, float Width, float Heigh
 	}
 	else
 	{
-		// À•W•ÏŠ·
+		// åº§æ¨™å¤‰æ›
 		vertex[0].Position.x = (-hw) * cosf(Rot) - (-hh) * sinf(Rot) + X;
 		vertex[0].Position.y = (-hw) * sinf(Rot) + (-hh) * cosf(Rot) + Y;
 		vertex[1].Position.x = (hw)*cosf(Rot) - (-hh) * sinf(Rot) + X;
@@ -512,39 +525,39 @@ void DrawSpriteColorRotate(int texNo, float X, float Y, float Width, float Heigh
 
 	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
 
-	// ’¸“_ƒoƒbƒtƒ@Ý’è
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	UINT stride = sizeof(VERTEX_3D);
 	UINT offset = 0;
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-	// ƒvƒŠƒ~ƒeƒBƒuƒgƒ|ƒƒWÝ’è
+	// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
 	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// ƒeƒNƒXƒ`ƒƒÝ’è
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
 	GetDeviceContext()->PSSetShaderResources(0, 1, GetTexture(texNo));
 
-	// ƒ|ƒŠƒSƒ“•`‰æ
+	// ãƒãƒªã‚´ãƒ³æç”»
 	GetDeviceContext()->Draw(NUM_VERTEX, 0);
 }
 
 //=============================================================================
-// ƒXƒvƒ‰ƒCƒgƒf[ƒ^Ý’è
-// À•WEƒTƒCƒYEUVŽw’èE’¸“_FE‰ñ“]Šp“x
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆãƒ‡ãƒ¼ã‚¿è¨­å®š
+// åº§æ¨™ãƒ»ã‚µã‚¤ã‚ºãƒ»UVæŒ‡å®šãƒ»é ‚ç‚¹è‰²ãƒ»å›žè»¢è§’åº¦
 //=============================================================================
-//ˆø”
-//texNo : ƒeƒNƒXƒ`ƒƒ‚ÌŽ¯•Ê”Ô†itexture.h, texture.cpp ‚ÌLoadTextureŠÖ”‚Ì–ß‚è’lj
-//X     : XÀ•WiƒXƒvƒ‰ƒCƒg‚Ì’†S“_j
-//Y		: YÀ•WiƒXƒvƒ‰ƒCƒg‚Ì’†S“_j
-//Width : ‰¡•
-//Height: ‚‚³
-//CX	: ‰ñ“]Ž²À•WX
-//CY	: ‰ñ“]Ž²À•WY
-//U		: UV’lŽn“_
-//V		: UV’lŽn“_
-//UW	: UV’l‰¡•
-//VH	: UV’l‚‚³
-//color : ’¸“_‚ÌFiRGBAj
-//Rot	: ‰ñ“]Šp“xiƒ‰ƒWƒAƒ“’lj
+//å¼•æ•°
+//texNo : ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è­˜åˆ¥ç•ªå·ï¼ˆtexture.h, texture.cpp ã®LoadTextureé–¢æ•°ã®æˆ»ã‚Šå€¤ï¼‰
+//X     : Xåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Y		: Yåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Width : æ¨ªå¹…
+//Height: é«˜ã•
+//CX	: å›žè»¢è»¸åº§æ¨™X
+//CY	: å›žè»¢è»¸åº§æ¨™Y
+//U		: UVå€¤å§‹ç‚¹
+//V		: UVå€¤å§‹ç‚¹
+//UW	: UVå€¤æ¨ªå¹…
+//VH	: UVå€¤é«˜ã•
+//color : é ‚ç‚¹ã®è‰²ï¼ˆRGBAï¼‰
+//Rot	: å›žè»¢è§’åº¦ï¼ˆãƒ©ã‚¸ã‚¢ãƒ³å€¤ï¼‰
 void DrawSpriteColorRotateAxis(int texNo, float X, float Y, float Width, float Height, float CX, float CY,
 	float U, float V, float UW, float VH,
 	float r, float g, float b, float a, float Rot)
@@ -558,10 +571,10 @@ void DrawSpriteColorRotateAxis(int texNo, float X, float Y, float Width, float H
 	hw = Width * 0.5f;
 	hh = Height * 0.5f;
 
-	//¦CX,CY‚ª‰ñ“]Ž²‚Æl‚¦‚é
-	//‰ñ“]Ž²‚ð(0,0)‚ÌŒ´“_‚ÉˆÚ“®‚·‚é‚½‚ßA‰ñ“]Ž²‚ÌÀ•W‚Ì•ª‚¾‚¯‹éŒ`‘S‘Ì‚ÌÀ•W‚ðƒ}ƒCƒiƒX‚µA‚»‚Ìó‘Ô‚Å‰ñ“]‚ðs‚¤
+	//â€»CX,CYãŒå›žè»¢è»¸ã¨è€ƒãˆã‚‹
+	//å›žè»¢è»¸ã‚’(0,0)ã®åŽŸç‚¹ã«ç§»å‹•ã™ã‚‹ãŸã‚ã€å›žè»¢è»¸ã®åº§æ¨™ã®åˆ†ã ã‘çŸ©å½¢å…¨ä½“ã®åº§æ¨™ã‚’ãƒžã‚¤ãƒŠã‚¹ã—ã€ãã®çŠ¶æ…‹ã§å›žè»¢ã‚’è¡Œã†
 
-	// À•W•ÏŠ·
+	// åº§æ¨™å¤‰æ›
 	vertex[0].Position.x = (-CX - hw) * cosf(Rot) - (-CY - hh) * sinf(Rot);
 	vertex[0].Position.y = (-CX - hw) * sinf(Rot) + (-CY - hh) * cosf(Rot);
 	vertex[1].Position.x = (-CX + hw) * cosf(Rot) - (-CY - hh) * sinf(Rot);
@@ -571,7 +584,7 @@ void DrawSpriteColorRotateAxis(int texNo, float X, float Y, float Width, float H
 	vertex[3].Position.x = (-CX + hw) * cosf(Rot) - (-CY + hh) * sinf(Rot);
 	vertex[3].Position.y = (-CX + hw) * sinf(Rot) + (-CY + hh) * cosf(Rot);
 
-	//‰ñ“]‚Ì•ÏŠ·‚ªI‚í‚Á‚½ó‘Ô‚Å‰ñ“]Ž²‚ÌÀ•W•ªƒvƒ‰ƒX‚µAŒ´“_‚É–ß‚·B‚³‚ç‚É•\Ž¦À•WiX,Yj‚Ü‚ÅˆÚ“®‚³‚¹‚é
+	//å›žè»¢ã®å¤‰æ›ãŒçµ‚ã‚ã£ãŸçŠ¶æ…‹ã§å›žè»¢è»¸ã®åº§æ¨™åˆ†ãƒ—ãƒ©ã‚¹ã—ã€åŽŸç‚¹ã«æˆ»ã™ã€‚ã•ã‚‰ã«è¡¨ç¤ºåº§æ¨™ï¼ˆX,Yï¼‰ã¾ã§ç§»å‹•ã•ã›ã‚‹
 	vertex[0].Position.x += CX + X;
 	vertex[0].Position.y += CY + Y;
 	vertex[1].Position.x += CX + X;
@@ -580,6 +593,16 @@ void DrawSpriteColorRotateAxis(int texNo, float X, float Y, float Width, float H
 	vertex[2].Position.y += CY + Y;
 	vertex[3].Position.x += CX + X;
 	vertex[3].Position.y += CY + Y;
+
+	if (g_Camera->IsSwap())
+	{
+		D3DXVECTOR3 buf = vertex[1].Position;
+		vertex[1].Position = vertex[0].Position;
+		vertex[0].Position = buf;
+		buf = vertex[3].Position;
+		vertex[3].Position = vertex[2].Position;
+		vertex[2].Position = buf;
+	}
 
 	D3DXCOLOR Color(r, g, b, a);
 	vertex[0].Diffuse = Color;
@@ -594,17 +617,123 @@ void DrawSpriteColorRotateAxis(int texNo, float X, float Y, float Width, float H
 
 	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
 
-	// ’¸“_ƒoƒbƒtƒ@Ý’è
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	UINT stride = sizeof(VERTEX_3D);
 	UINT offset = 0;
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
-	// ƒvƒŠƒ~ƒeƒBƒuƒgƒ|ƒƒWÝ’è
+	// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
 	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// ƒeƒNƒXƒ`ƒƒÝ’è
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
 	GetDeviceContext()->PSSetShaderResources(0, 1, GetTexture(texNo));
 
-	// ƒ|ƒŠƒSƒ“•`‰æ
+	// ãƒãƒªã‚´ãƒ³æç”»
+	GetDeviceContext()->Draw(NUM_VERTEX, 0);
+}
+
+
+
+//=============================================================================
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆãƒ‡ãƒ¼ã‚¿UIç”¨è¨­å®š
+// åº§æ¨™ãƒ»ã‚µã‚¤ã‚ºãƒ»UVæŒ‡å®šãƒ»é ‚ç‚¹è‰²
+//=============================================================================
+//å¼•æ•°
+//texNo : ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è­˜åˆ¥ç•ªå·ï¼ˆtexture.h, texture.cpp ã®LoadTextureé–¢æ•°ã®æˆ»ã‚Šå€¤ï¼‰
+//X     : Xåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Y		: Yåº§æ¨™ï¼ˆã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®ä¸­å¿ƒç‚¹ï¼‰
+//Width : æ¨ªå¹…
+//Height: é«˜ã•
+//U		: UVå€¤å§‹ç‚¹
+//V		: UVå€¤å§‹ç‚¹
+//UW	: UVå€¤æ¨ªå¹…
+//VH	: UVå€¤é«˜ã•
+//color : é ‚ç‚¹ã®è‰²ï¼ˆRGBAï¼‰
+void RectDrawSpriteColor(int texNo, float X, float Y, float Width, float Height, float U, float V, float UW, float VH, float r, float g, float b, float a)
+{
+	D3D11_MAPPED_SUBRESOURCE msr;
+	GetDeviceContext()->Map(g_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
+
+	VERTEX_3D* vertex = (VERTEX_3D*)msr.pData;
+
+	D3DXVECTOR2 screenSize = g_Camera->GetSize();
+	D3DXVECTOR2 zoom = g_Camera->GetZoom();
+	// ã‚ºãƒ¼ãƒ é‡ãŒå¢—æ¸›ã—ã¦ã‚‚è¦‹ãˆã‚‹ä½ç½®ã‚’å›ºå®šã«ã™ã‚‹
+	X = X * zoom.x;
+	Y = Y * zoom.y;
+
+	// ã‚ºãƒ¼ãƒ é‡ãŒå¢—æ¸›ã—ã¦ã‚‚è¦‹ãˆã‚‹å¤§ãã•ã‚’å›ºå®šã«ã™ã‚‹
+	Width = Width * zoom.x;
+	Height = Height * zoom.y;
+
+	float hw, hh;
+	hw = Width * 0.5f;
+	hh = Height * 0.5f;
+
+	D3DXCOLOR Color(r, g, b, a);
+
+	if (g_Camera->IsSwap())
+	{
+		// åè»¢ä½œæ¥­
+		X = (X - (screenSize.x * zoom.x) / 2) * -2 + X;
+
+		// é ‚ç‚¹ï¼ç•ªï¼ˆå·¦ä¸Šã®é ‚ç‚¹ï¼‰
+		vertex[1].Position = D3DXVECTOR3(X - hw, Y - hh, 0.0f);
+		vertex[1].Diffuse = Color;
+		vertex[1].TexCoord = D3DXVECTOR2(U + UW, V);
+
+		// é ‚ç‚¹ï¼‘ç•ªï¼ˆå³ä¸Šã®é ‚ç‚¹ï¼‰
+		vertex[0].Position = D3DXVECTOR3(X + hw, Y - hh, 0.0f);
+		vertex[0].Diffuse = Color;
+		vertex[0].TexCoord = D3DXVECTOR2(U, V);
+
+		// é ‚ç‚¹ï¼’ç•ªï¼ˆå·¦ä¸‹ã®é ‚ç‚¹ï¼‰
+		vertex[3].Position = D3DXVECTOR3(X - hw, Y + hh, 0.0f);
+		vertex[3].Diffuse = Color;
+		vertex[3].TexCoord = D3DXVECTOR2(U + UW, V + VH);
+
+		// é ‚ç‚¹ï¼“ç•ªï¼ˆå³ä¸‹ã®é ‚ç‚¹ï¼‰
+		vertex[2].Position = D3DXVECTOR3(X + hw, Y + hh, 0.0f);
+		vertex[2].Diffuse = Color;
+		vertex[2].TexCoord = D3DXVECTOR2(U, V + VH);
+	}
+	else
+	{
+		// é ‚ç‚¹ï¼ç•ªï¼ˆå·¦ä¸Šã®é ‚ç‚¹ï¼‰
+		vertex[0].Position = D3DXVECTOR3(X - hw, Y - hh, 0.0f);
+		vertex[0].Diffuse = Color;
+		vertex[0].TexCoord = D3DXVECTOR2(U, V);
+
+		// é ‚ç‚¹ï¼‘ç•ªï¼ˆå³ä¸Šã®é ‚ç‚¹ï¼‰
+		vertex[1].Position = D3DXVECTOR3(X + hw, Y - hh, 0.0f);
+		vertex[1].Diffuse = Color;
+		vertex[1].TexCoord = D3DXVECTOR2(U + UW, V);
+
+		// é ‚ç‚¹ï¼’ç•ªï¼ˆå·¦ä¸‹ã®é ‚ç‚¹ï¼‰
+		vertex[2].Position = D3DXVECTOR3(X - hw, Y + hh, 0.0f);
+		vertex[2].Diffuse = Color;
+		vertex[2].TexCoord = D3DXVECTOR2(U, V + VH);
+
+		// é ‚ç‚¹ï¼“ç•ªï¼ˆå³ä¸‹ã®é ‚ç‚¹ï¼‰
+		vertex[3].Position = D3DXVECTOR3(X + hw, Y + hh, 0.0f);
+		vertex[3].Diffuse = Color;
+		vertex[3].TexCoord = D3DXVECTOR2(U + UW, V + VH);
+	}
+	
+
+	GetDeviceContext()->Unmap(g_VertexBuffer, 0);
+
+	// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
+	UINT stride = sizeof(VERTEX_3D);
+	UINT offset = 0;
+	GetDeviceContext()->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
+
+	// ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–ãƒˆãƒãƒ­ã‚¸è¨­å®š
+	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	// ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®š
+	GetDeviceContext()->PSSetShaderResources(0, 1, GetTexture(texNo));
+
+	// ãƒãƒªã‚´ãƒ³æç”»
 	GetDeviceContext()->Draw(NUM_VERTEX, 0);
 }

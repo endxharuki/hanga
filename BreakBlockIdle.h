@@ -17,7 +17,11 @@ public:
 private:
 	GameObject *obj;
 
+	void ColidPlayer();
+	void ColidObject();
+
 	unsigned int blockTex[2];
+	unsigned int breakTex[2];
 	int			drawMode;
 };
 

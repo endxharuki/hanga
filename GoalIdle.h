@@ -1,9 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include "StateBase.h"
 #include "GameObject.h"
 #include "ColiderPool.h"
 #include "Player.h"
+
+#define CHANGE_ALP_VEL (0.025f)
 
 class GoalIdle : public StateBase
 {
@@ -31,5 +33,8 @@ private:
 	int drawMode;
 
 	bool prevHasSwap;
+
+	float alp = 1.0f;
+	int alpRevarse = 1;
 };
 

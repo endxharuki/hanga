@@ -1,0 +1,62 @@
+diff a/MainInStageSelect.cpp b/MainInStageSelect.cpp	(rejected hunks)
+@@ -53,7 +53,6 @@
+ 	runTex[1] = LoadTexture((char*)"data/TEXTURE/PLAYER/run.png");
+ 	enemy = LoadTexture((char*)"data/TEXTURE/hitotume_front.png");
+ 
+-
+ 	mojisize[0] = 100.0f;
+ 	mojisize[1] = 0.0f;
+ 
+@@ -73,10 +72,6 @@
+ 
+ 	level = 1;
+ 
+-	iUV.x = (currentIdleTex % 5) * (1.0f / 5);
+-	iUV.y = (currentIdleTex / 5) * (1.0f / 2);
+-	iUV.z = 1.0f / 5;
+-	iUV.w = 1.0f / 2;
+ }
+ 
+ void MainStageSelect::CleanUp()
+@@ -89,12 +84,6 @@
+ 
+ void MainStageSelect::OnUpdate()
+ {
+-	first_frame++;
+-	if (first_frame >= 30.0f) {
+-		isContorol = true;
+-	}
+-	if (isContorol == false) return;
+-
+ 	if (isRun == false) {
+ 		if (GetKeyboardPress(DIK_A) || IsSwitchTriggerd(0, BUTTON_LEFT) || GetLeftStick(0).x < 0.0f)
+ 		{
+@@ -137,6 +126,7 @@
+ 		rgb[0] = 0.3f;
+ 		rgb[1] = 0.3f;
+ 
++
+ 		rU = (currentRunTex % 5) * (1.0f / (5));
+ 		rV = (currentRunTex / 5) * (1.0f / 2);
+ 		rUW = 1.0f / 5;
+@@ -184,6 +174,7 @@
+ 
+ 		++currentIdleTex;
+ 
++
+ 		if (stageSelect == 1)
+ 		{
+ 			mojisize[0] = 100.0f;
+@@ -201,11 +192,11 @@
+ 		currentIdleTex = 0;
+ 	}
+ 
++	
+ 	if (IsButtonTriggered(0, BUTTON_B) || (GetKeyboardTrigger(DIK_ESCAPE)))
+ 	{
+ 		ChangeRequest("Title");
+ 	}
+-
+ }
+ 
+ void MainStageSelect::OnDraw()

@@ -28,6 +28,7 @@ public:
 
 
 	Transform2D* GetTransform() { return &transform; }
+	float GetWeight() { return weight; }
 
 	template<typename T>
 	T* GetComponent() {
@@ -41,12 +42,19 @@ public:
 		return nullptr;
 	}
 
+	void DeleteComponent(Component* target)
+	{
+		componentPool.Delete(target);
+	}
+
 protected:
 	StateMachineBase stateMachine;		// オブジェクトの状態管理
 
 	// コンポーネント類
 	Transform2D		transform;			// オブジェクトの位置などの管理、呼び出しやすいよう外にだす
 	ComponentPool componentPool;			// コンポーネントを管理
+
+	float weight = 1.0f;
 };
 
 #endif // !_GAME_OBJECT_H_

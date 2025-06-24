@@ -12,7 +12,7 @@
 /*------------------------------------------------------------------------------
    定数定義
 ------------------------------------------------------------------------------*/
-#define MAX_TEXTURE_NUM 100
+#define MAX_TEXTURE_NUM 600
 
 /*------------------------------------------------------------------------------
    構造体宣言
@@ -75,6 +75,40 @@ int LoadTexture(char* fileName)
 	g_TextureIndex++;
 
 	return retIndex;
+}
+
+int LoadScreenShot()
+{
+	//読み込み最大数を超えていたら負の値を返す
+	if (g_TextureIndex == MAX_TEXTURE_NUM)
+	{
+		return -1;
+	}
+
+	g_pTexture[g_TextureIndex] = GetScreenShot();
+
+	int retIndex = g_TextureIndex;
+
+	//インデックスを一つ進める
+	g_TextureIndex++;
+
+	return retIndex;
+}
+
+void spilitTexture(int spilitIndex, int* out_R, int* out_L)
+{
+	ID3D11ShaderResourceView* SRV =  *GetTexture(spilitIndex);
+	if (!SRV)return;
+
+	int idx_r = g_TextureIndex;
+	int idx_l = g_TextureIndex + 1;
+
+	SplitTexture(SRV, &g_pTexture[idx_r], &g_pTexture[idx_l]);
+
+	*out_R = idx_r;
+	*out_L = idx_l;
+
+	g_TextureIndex += 2;
 }
 
 void UninitTexture(void)

@@ -19,6 +19,17 @@ public:
 		pool.push_back(add);
 	}
 
+	void Delete(Component* target) {
+		pool.remove_if([target](Component* p) {
+			if (p == target)
+			{
+				delete p;
+				return true;
+			}
+			return false;
+			});
+	}
+
 	std::list<Component*>& GetPool() {
 		return pool;
 	}

@@ -8,6 +8,8 @@
 #include "OnGameData.h"
 #include "Camera.h"
 
+#include <algorithm>
+
 
 void Colider2D::SetVertex()
 {
@@ -17,14 +19,14 @@ void Colider2D::SetVertex()
 	hh = size.y * 0.5f;
 
 	// 座標変換
-	vtx[0].x = (-hw) * cosf(rotate) - (-hh) * sinf(rotate) + pos.x;
-	vtx[0].y = (-hw) * sinf(rotate) + (-hh) * cosf(rotate) + pos.y;
-	vtx[1].x = (hw)*cosf(rotate) - (-hh) * sinf(rotate) + pos.x;
-	vtx[1].y = (hw)*sinf(rotate) + (-hh) * cosf(rotate) + pos.y;
-	vtx[2].x = (-hw) * cosf(rotate) - (hh)*sinf(rotate) + pos.x;
-	vtx[2].y = (-hw) * sinf(rotate) + (hh)*cosf(rotate) + pos.y;
-	vtx[3].x = (hw)*cosf(rotate) - (hh)*sinf(rotate) + pos.x;
-	vtx[3].y = (hw)*sinf(rotate) + (hh)*cosf(rotate) + pos.y;
+	vtx[0].x = (-hw) * cosf(rotate) - (-hh) * sinf(rotate) + drawPos.x;
+	vtx[0].y = (-hw) * sinf(rotate) + (-hh) * cosf(rotate) + drawPos.y;
+	vtx[1].x = (hw)*cosf(rotate) - (-hh) * sinf(rotate) + drawPos.x;
+	vtx[1].y = (hw)*sinf(rotate) + (-hh) * cosf(rotate) + drawPos.y;
+	vtx[2].x = (-hw) * cosf(rotate) - (hh)*sinf(rotate) + drawPos.x;
+	vtx[2].y = (-hw) * sinf(rotate) + (hh)*cosf(rotate) + drawPos.y;
+	vtx[3].x = (hw)*cosf(rotate) - (hh)*sinf(rotate) + drawPos.x;
+	vtx[3].y = (hw)*sinf(rotate) + (hh)*cosf(rotate) + drawPos.y;
 }
 
 void Colider2D::Rotate(float radAngle)
@@ -53,11 +55,50 @@ bool Colider2D::IsColid(Colider2D obj)
 	}
 }
 
+ColidDir Colider2D::IsDirColid(Colider2D obj)
+{
+	if (!IsColid(obj)) return NONE;
+
+	// それぞれ横縦の半分
+	float hw = size.x / 2;
+	float hh = size.y / 2;
+	float thw = obj.size.x / 2;
+	float thh = obj.size.y / 2;
+
+	// 方向検知
+	D3DXVECTOR2 colidPos = GetPos();
+	float right = colidPos.x + hw;
+	float left = colidPos.x - hw;
+	float up = colidPos.y - hh;
+	float down = colidPos.y + hh;
+
+	D3DXVECTOR2 target = obj.GetPos();
+	float tRight = target.x + thw;
+	float tLeft = target.x - thw;
+	float tUp = target.y - thh;
+	float tDown = target.y + thh;
+
+	float rightDir = std::abs(right - tLeft);
+	float leftDir = std::abs(tRight - left);
+	float upDir = std::abs(tDown - up);
+	float downDir = std::abs(down - tUp);
+
+	// windows.hの方のminを使わないようにする(というか使えない)
+	// 最も辺と辺の差が小さい辺
+	float minDir = (std::min)({rightDir, leftDir, upDir, downDir});
+
+	if (minDir == rightDir)return RIGHT;
+	else if (minDir == leftDir) return LEFT;
+	else if (minDir == upDir)return UP;
+	else if (minDir == downDir)return DOWN;
+
+	return NONE;
+}
+
 void Colider2D::viewColid()
 {
-	pos = parent->GetPos() + offset;
 	D3DXVECTOR2 cameraPos = Camera::GetInstance()->GetOriginPos();
-	pos = pos - cameraPos;
+	drawPos = GetPos() - cameraPos;
 	SetVertex();
 
 	color = isFriction ? D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.4f) : D3DXCOLOR(0.0f, 1.0f, 0.0f, 0.4f);
@@ -71,9 +112,8 @@ void Colider2D::viewColid()
 // デバッグ用
 void Colider2D::viewColid(D3DXCOLOR colidColor)
 {
-	pos = parent->GetPos() + offset;
 	D3DXVECTOR2 cameraPos = Camera::GetInstance()->GetOriginPos();
-	pos = pos - cameraPos;
+	drawPos = GetPos() - cameraPos;
 	SetVertex();
 
 	DrawSpriteVtxSetColor(OnGameData::GetInstance()->GetColidTex(),

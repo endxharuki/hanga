@@ -81,6 +81,18 @@ bool GetKeyboardTrigger(int nKey);
 bool GetKeyboardRepeat(int nKey);
 bool GetKeyboardRelease(int nKey);
 
+// キーを疑似的に押した状態にします
+void VirtualInputPress(int nKey);
+
+// キーを押せない状態にします
+void NotControlKey(int nKey);
+
+// キーを押せる状態にします
+void ControlKey(int nKey);
+
+// キーをすべて押せる状態にします
+void AllControlKey();
+
 //---------------------------- mouse
 BOOL IsMouseLeftPressed(void);      // 左クリックした状態
 BOOL IsMouseLeftTriggered(void);    // 左クリックした瞬間
@@ -91,6 +103,16 @@ BOOL IsMouseCenterTriggered(void);  // 中クリックした瞬間
 long GetMouseX(void);               // マウスがX方向に動いた相対値
 long GetMouseY(void);               // マウスがY方向に動いた相対値
 long GetMouseZ(void);               // マウスホイールが動いた相対値
+
+
+// パッドを押せない状態にします
+void NotControlPad(int nPad);
+
+// パッドを押せる状態にします
+void ControlPad(int nPad);
+
+// パッドをすべて押せる状態にします
+void AllControlPad();
 
 //---------------------------- game pad
 BOOL IsButtonPressed(int padNo,DWORD button);

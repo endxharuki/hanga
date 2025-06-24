@@ -27,31 +27,18 @@ void TrampolineBlockIdle::SetUp()
 	pool->Add(Colider2D(
 		obj->GetTransform(),
 		D3DXVECTOR2( -obj->GetTransform()->GetSize().x / 2,0.0f),
-		D3DXVECTOR2(0.0f, obj->GetTransform()->GetSize().y - 10.0f)
+		D3DXVECTOR2(10.0f, obj->GetTransform()->GetSize().y - 20.0f),
+		"NOT"
 	));
 
 	// 右判定
 	pool->Add(Colider2D(
 		obj->GetTransform(),
 		D3DXVECTOR2(obj->GetTransform()->GetSize().x / 2, 0.0f),
-		D3DXVECTOR2(0.0f, obj->GetTransform()->GetSize().y - 10.0f)
+		D3DXVECTOR2(10.0f, obj->GetTransform()->GetSize().y - 20.0f),
+		"NOT"
 	));
 
-	/*
-	// 上判定
-	pool->Add(Colider2D(
-		obj->GetTransform(),
-		D3DXVECTOR2(0.0f,-obj->GetTransform()->GetSize().y / 2),
-		D3DXVECTOR2(obj->GetTransform()->GetSize().x, 0.0f)
-	));
-
-	// 下判定
-	pool->Add(Colider2D(
-		obj->GetTransform(),
-		D3DXVECTOR2(0.0f, obj->GetTransform()->GetSize().y / 2),
-		D3DXVECTOR2(obj->GetTransform()->GetSize().x, 0.0f)
-	));
-	*/
 
 
 	// 向きの指定
@@ -91,16 +78,21 @@ void TrampolineBlockIdle::OnUpdate()
 	// 左右で跳ねる向きの判定
 	if ( pool->GetColider()[boundDirection + 1].IsColid(pPlayer->GetComponent<ColiderPool>()->GetColider()[0]))
 	{
-		transform->SetVel(-transform->GetVel());//移動値を反転
-		transform->SetOutVel(transform->GetVel().x + 15.0f * moveSign, transform->GetVel().y);//外部速度に加算
+		transform->SetOutVel(15.0f * moveSign, -50.0f);//外部速度に加算
+		transform->SetVel(D3DXVECTOR2(0.0f, 0.0f));//移動値を反転
+		MainInGame::player->NonInput(20);
+		MainInGame::player->SetNotJump(true);
 	}
 	//埋まり解消
 	if (pool->GetColider()[0].IsColid(pPlayer->GetComponent<ColiderPool>()->GetColider()[0]))
 	{
-		float blockTop = pos.y - size.y / 2;
-		float blockLeft = pos.x - size.x / 2;
-		float blockRight = pos.x + size.x / 2;
-		float blockBottom = pos.y + size.y / 2;
+		D3DXVECTOR2 colidPos =  pool->GetColider()[0].GetPos();
+		D3DXVECTOR2 colidSize = pool->GetColider()[0].GetSize();
+
+		float blockTop = colidPos.y - colidSize.y / 2;
+		float blockLeft = colidPos.x - colidSize.x / 2;
+		float blockRight = colidPos.x + colidSize.x / 2;
+		float blockBottom = colidPos.y + colidSize.y / 2;
 
 		float playerTop = transform->GetPos().y - transform->GetSize().y / 2;
 		float playerLeft = transform->GetPos().x - transform->GetSize().x / 2;
@@ -112,49 +104,23 @@ void TrampolineBlockIdle::OnUpdate()
 		float playerOldRight = oldTransPos.x + transform->GetSize().x / 2;
 		float playerOldBottom = oldTransPos.y + transform->GetSize().y / 2;
 
-		if (blockTop < playerBottom && blockTop > playerOldBottom)//上
+		if (blockTop <= playerBottom && blockTop >= playerOldBottom)//上
 		{ 
 			transform->SetPos(transform->GetPos().x, blockTop - transform->GetSize().y / 2);
 		}
-		if (blockLeft < playerRight && blockLeft > playerOldRight)//左
+		if (blockLeft <= playerRight && blockLeft >= playerOldRight)//左
 		{
 			transform->SetPos(blockLeft - transform->GetSize().x / 2, transform->GetPos().y);
 		}
-		if (blockRight > playerLeft && blockRight < playerOldLeft)//右
+		if (blockRight >= playerLeft && blockRight <= playerOldLeft)//右
 		{
 			transform->SetPos(blockRight + transform->GetSize().x / 2, transform->GetPos().y);
 		}
-		if (blockBottom > playerTop && blockBottom < playerOldTop)//下
+		if (blockBottom >= playerTop && blockBottom <= playerOldTop)//下
 		{
 			transform->SetPos(transform->GetPos().x, blockBottom + transform->GetSize().y / 2);
 		}
 	}
-	/*
-	for (int i = 0; i < 4; i++)
-	{
-		if (pool->GetColider()[i + 1].IsColid(pPlayer->GetComponent<ColiderPool>()->GetColider()[0]))
-		{
-			switch (i)
-			{
-			case 0://左
-				transform->SetPos(pos.x - size.x/2 - transform->GetSize().x/2, transform->GetPos().y);
-				break;
-			case 1://右
-				transform->SetPos(pos.x + size.x / 2 + transform->GetSize().x / 2, transform->GetPos().y);
-				break;
-			case 2://上
-				transform->SetPos(transform->GetPos().x, pos.y - size.y / 2 - transform->GetSize().y / 2);
-				break;
-			case 3://下
-				transform->SetPos(transform->GetPos().x, pos.y + size.y / 2 + transform->GetSize().y / 2);
-				break;
-
-			default:
-				break;
-			}
-		}
-	}
-	*/
 
 	oldTransPos = pPlayer->GetTransform()->GetPos();
 }
@@ -174,6 +140,6 @@ void TrampolineBlockIdle::OnDraw()
 		size.x / CHIP_X_SIZE * moveSign, size.y / CHIP_Y_SIZE
 	);
 
-	//obj->GetColider()[0].viewColid(D3DXCOLOR(0.0f, 1.0f, 0.0f, 0.3f));
-	//obj->GetColider()[1].viewColid(D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.3f));
+	//obj->GetComponent<ColiderPool>()->GetColider()[1].viewColid(D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.3f));
+	//obj->GetComponent<ColiderPool>()->GetColider()[2].viewColid(D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.3f));
 }

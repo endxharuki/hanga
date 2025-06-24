@@ -7,10 +7,8 @@
 class WallEnemIdle : public StateBase
 {
 public:
-	WallEnemIdle(std::string _key, GameObject* _obj, D3DXVECTOR2 _pos)
-		: StateBase(_key), obj(_obj) {
-		obj->GetTransform()->SetPos(_pos);
-	}
+	WallEnemIdle(std::string _key, GameObject* _obj)
+		: StateBase(_key), obj(_obj) {}
 
 	void SetUp() override;
 	void CleanUp() override;
@@ -22,6 +20,9 @@ private:
 
 	unsigned int tex[2];
 	int drawMode;
+
+	D3DXVECTOR2 uv;
+	int animFrame;
 
 	bool prevSwap = false;
 

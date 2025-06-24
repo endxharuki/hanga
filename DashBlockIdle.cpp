@@ -1,4 +1,5 @@
 #include "DashBlockIdle.h"
+#include "DashBlock.h"
 #include "BlockMap.h"
 #include "main.h"
 #include "texture.h"
@@ -25,11 +26,12 @@ void DashBlockIdle::SetUp()
 	pool->Add(Colider2D(
 		obj->GetTransform(),
 		D3DXVECTOR2(0.0f, -obj->GetTransform()->GetSize().y / 2),
-		D3DXVECTOR2(obj->GetTransform()->GetSize().x - 10.0f, obj->GetTransform()->GetSize().y)
+		D3DXVECTOR2(obj->GetTransform()->GetSize().x - 10.0f, obj->GetTransform()->GetSize().y),
+		"NOT"
 	));
 
 	// Œü‚«‚ÌŽw’è
-	moveSign = isRight ? 1.0f : -1.0f;
+	moveSign = obj->IsRight() ? 1.0f : -1.0f;
 
 	prevHasSwap = OnGameData::GetInstance()->HasSwap();
 }
@@ -41,12 +43,6 @@ void DashBlockIdle::CleanUp()
 
 void DashBlockIdle::OnUpdate()
 {
-	if (prevHasSwap != OnGameData::GetInstance()->HasSwap())
-	{
-		drawMode = (drawMode + 1) % 2;
-		prevHasSwap = !prevHasSwap;
-	}
-
 	Player* pPlayer = MainInGame::player;
 
 	// ã‚Ì”»’è‚Éd‚È‚Á‚Ä‚¢‚éê‡
@@ -59,6 +55,8 @@ void DashBlockIdle::OnUpdate()
 
 void DashBlockIdle::OnDraw()
 {
+	drawMode = OnGameData::GetInstance()->HasSwap() ? 1 : 0;
+
 	// ƒJƒƒ‰‚ÌˆÚ“®
 	D3DXVECTOR2 pos = obj->GetTransform()->GetPos();
 	D3DXVECTOR2 size = obj->GetTransform()->GetSize();
@@ -71,7 +69,4 @@ void DashBlockIdle::OnDraw()
 		0.0f, 0.0f,
 		size.x / CHIP_X_SIZE * moveSign, size.y / CHIP_Y_SIZE
 	);
-
-	//obj->GetColider()[0].viewColid(D3DXCOLOR(0.0f, 1.0f, 0.0f, 0.3f));
-	//obj->GetColider()[1].viewColid(D3DXCOLOR(1.0f, 0.0f, 0.0f, 0.3f));
 }

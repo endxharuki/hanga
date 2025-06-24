@@ -6,6 +6,7 @@
 #include "ObjectPool.h"
 #include "MainInGame.h"
 #include "Enemmy.h"
+#include "sound.h"
 
 void BulletIdle::SetUp()
 {
@@ -13,8 +14,8 @@ void BulletIdle::SetUp()
 
 	prevHasSwap = OnGameData::GetInstance()->HasSwap();
 
-	tex[0] = LoadTexture((char*)"data/TEXTURE/Bullet1.png");
-	tex[1] = LoadTexture((char*)"data/TEXTURE/Bullet2.png");
+	tex[0] = LoadTexture((char*)"data/TEXTURE/seed.png");
+	tex[1] = LoadTexture((char*)"data/TEXTURE/seed_R.png");
 	drawMode = OnGameData::GetInstance()->HasSwap() ? 1 : 0;
 
 
@@ -22,6 +23,8 @@ void BulletIdle::SetUp()
 	obj->GetTransform()->SetGravity(0.0f);
 	obj->GetTransform()->SetRotation(0.0f);
 	obj->GetTransform()->SetRotationVel(0.0f);
+
+	breakSE = LoadSound((char*)"data/SE/bullet_break.wav");
 }
 
 void BulletIdle::CleanUp()
@@ -44,8 +47,7 @@ void BulletIdle::OnUpdate()
 	// 移動処理
 	transform->SetPos(transform->GetPos().x + transform->GetVel().x, transform->GetPos().y + transform->GetVel().y);
 	
-	ColidBlock();
-	ColidPlayer();
+	
 
 
 	D3DXVECTOR2 pos = transform->GetPos();
@@ -60,13 +62,11 @@ void BulletIdle::OnUpdate()
 	if (deleteRequest)
 	{
 		// 削除処理
-		if (MainInGame::objectPool.DeleteRequest(obj))
-		{
-  			*enemBullet = nullptr;
-			return;
-		}
-		*enemBullet = nullptr;
+		MainInGame::objectPool.DeleteRequest(obj);
+		if(enemBullet != nullptr)*enemBullet = nullptr;
 	}
+	ColidBlock();
+	ColidPlayer();
 }
 
 void BulletIdle::OnDraw()
@@ -93,6 +93,7 @@ void BulletIdle::ColidBlock()
 	if (BlockMap::GetInstance()->IsColidAllBlock(obj->GetTransform(), obj->GetComponent<ColiderPool>()->GetColider()[0]) )
 	{	// 何かに衝突時
 		deleteRequest = true;
+		PlaySound(breakSE, 0);
 	}
 
 	// オブジェクトとの衝突判定
@@ -108,9 +109,10 @@ void BulletIdle::ColidBlock()
 		ColiderPool* targetColidPool = target->GetComponent<ColiderPool>();
 		if (targetColidPool == nullptr) continue;
 
-		if (colid.IsColid(targetColidPool->GetColider()[0]))
+		if (colid.IsColid(targetColidPool->GetColider()[0]) && targetColidPool->GetColider()[0].GetTag() != "Coin")
 		{
  			deleteRequest = true;
+			PlaySound(breakSE, 0);
 			break;
 		}
 	}
@@ -125,5 +127,6 @@ void BulletIdle::ColidPlayer()
 	{
 		MainInGame::player->GetComponent<Damaged>()->Damage(1);
 		deleteRequest = true;
+		PlaySound(breakSE, 0);
 	}
 }

@@ -1,0 +1,32 @@
+diff a/Break.h b/Break.h	(rejected hunks)
+@@ -4,11 +4,15 @@
+ #include "Component.h"
+ #include "GameObject.h"
+ #include "MainInGame.h"
++#include "sound.h"
+ 
+ class Break : public Component
+ {
+ public:
+-	Break(GameObject* obj):object(obj) {};
++	Break(GameObject* obj):object(obj) {
++	
++		SE = LoadSound((char*)"data/SE/wallbreak.wav");
++	};
+ 	~Break() {};
+ 
+ 	void SetEffect(EffectObj set) {
+@@ -24,6 +28,7 @@
+ 		{
+ 			_effect->pos = object->GetTransform()->GetPos();
+   			MainInGame::effectManager.Add(*_effect);
++			PlaySound(SE, 0);
+ 		}
+ 		MainInGame::objectPool.DeleteRequest(object);
+ 	}
+@@ -31,4 +36,5 @@
+ private:
+ 	GameObject* object;
+ 	EffectObj* _effect = nullptr;
++	int SE = 0;
+ };

@@ -1,0 +1,55 @@
+﻿#pragma once
+
+#include "StateBase.h"
+#include "GameObject.h"
+#include "BlockMap.h"
+#include "Bullet.h"
+
+#define BULLET_ENEMY_SHOT_FRAME (180)
+
+class BulletSwingEnemmyIdle : public StateBase
+{
+public:
+	BulletSwingEnemmyIdle(std::string _key, GameObject* _obj, D3DXVECTOR2 _pos)
+		: StateBase(_key), obj(_obj) {
+		obj->GetTransform()->SetPos(_pos);
+	}
+
+	void SetUp() override;
+	void CleanUp() override;
+	void OnUpdate() override;
+	void OnDraw() override;
+
+private:
+	bool ColidBullet();
+	void Shot();
+	void DeathRendition();
+	void ColidPlayer();
+
+	unsigned int idleTex[2];
+	unsigned int tateTex[2];
+	unsigned int yokoTex[2];
+	unsigned int nanameTex[2];
+	int drawMode;
+
+	 D3DXVECTOR4 iUV;
+	 D3DXVECTOR4 aUV;
+
+	int shotSE;
+
+	bool prevSwap = false;
+
+	bool isDie = false;
+	float dieRot = 0.0f;
+	float startPosY = 0.0f;
+	int shotFrameCount = 0;
+
+	GameObject* obj;
+	Bullet* bullet = nullptr;	// 現在出ている弾を格納する
+
+	// 弾の発射に関するステータス
+	const float shotHeight = 10.0f;	// 弾をオブジェクトのどの高さで発射するか
+	const D3DXVECTOR2 bulletSize = D3DXVECTOR2(CHIP_X_SIZE, CHIP_Y_SIZE);
+	const D3DXVECTOR2 bulletVel = D3DXVECTOR2(5.0f, 0.0f);
+	float shotDir = -1.0f;
+};
