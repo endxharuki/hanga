@@ -1,0 +1,420 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="ソース ファイル\Obj">
+      <UniqueIdentifier>{06f4a8a6-f015-42b5-a59e-313c4d17c46b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Core">
+      <UniqueIdentifier>{2b3895a8-f7bd-4b25-b43b-a116a9970927}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Player">
+      <UniqueIdentifier>{472ee92b-216b-4552-a6ac-443fe6fbb753}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Map">
+      <UniqueIdentifier>{4b3dd9fb-8bc2-455d-a5e6-b0ce36fc5f8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Main">
+      <UniqueIdentifier>{71bb944a-b11f-4a99-b0ee-db36e33fa494}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Core\GameObject">
+      <UniqueIdentifier>{ab971b8c-5a46-4e63-a335-0ae2212277e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Map\LandBlock">
+      <UniqueIdentifier>{65c51f18-51c4-48a9-8e3a-7c42831fd3db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Map\Goal">
+      <UniqueIdentifier>{b2e7527d-1bfc-4ce3-a9ec-ef44519e0e3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Effect">
+      <UniqueIdentifier>{be52df5e-1827-429e-84a0-916765f61c4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\UI">
+      <UniqueIdentifier>{d1790c67-fffd-454b-ae47-7e7ff1391c29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Core\Text">
+      <UniqueIdentifier>{545694c4-fdee-4ee7-b893-387e739527ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Enemmy">
+      <UniqueIdentifier>{dd612c98-3387-4c84-b139-e0c7fbddae0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Map\DashBlock">
+      <UniqueIdentifier>{f8da19a0-4cae-41db-a04d-a5ca75176b5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Core\ObjectCommon">
+      <UniqueIdentifier>{344cf39a-3b89-45dd-81ed-f88f2d4d50ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Obj\BOX">
+      <UniqueIdentifier>{981ff155-6b2a-4359-b1b0-35069df88cc5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Obj\Pushed">
+      <UniqueIdentifier>{cb096656-0c10-4dd8-ab7e-509958054212}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Obj\BOX\WoodBox">
+      <UniqueIdentifier>{3861e764-664d-4a61-b82b-883a96bb70d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Map\ThornBlock">
+      <UniqueIdentifier>{0bc89229-a00a-4e2b-a068-47c44ccd1fe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Enemmy\Bullet">
+      <UniqueIdentifier>{fb526ffc-e996-4d66-b184-bc231a674499}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Enemmy\Rock">
+      <UniqueIdentifier>{be691f59-8dd1-400d-8f1b-e2bc4f6bcecb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Map\BreakBlock">
+      <UniqueIdentifier>{8132510c-58c1-4193-8a76-dd8d983212d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Map\Break">
+      <UniqueIdentifier>{f1ca4bc5-aa05-445c-ae91-8138dd0962e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Obj\StarCoin">
+      <UniqueIdentifier>{21919adb-2da2-4557-bc87-d8c5b0955ea1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Player\Damaged">
+      <UniqueIdentifier>{ba480a79-35c9-4fa7-9ae5-85843cb2aa4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Enemmy\OneEye">
+      <UniqueIdentifier>{b251140f-491f-4e61-b1e0-f70045b76306}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Obj\Tranpoline">
+      <UniqueIdentifier>{8b983776-a34e-43b4-b79c-82a92e28c6ad}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sprite.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="renderer.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerGame.cpp">
+      <Filter>ソース ファイル\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="BlockMap.cpp">
+      <Filter>ソース ファイル\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>ソース ファイル\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="MainInGame.cpp">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="MainTitle.cpp">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>ソース ファイル\Core\GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform2D.cpp">
+      <Filter>ソース ファイル\Core\GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="LandBlockIdle.cpp">
+      <Filter>ソース ファイル\Map\LandBlock</Filter>
+    </ClCompile>
+    <ClCompile Include="Colider2D.cpp">
+      <Filter>ソース ファイル\Core\GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="OnGameData.cpp">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="GoalIdle.cpp">
+      <Filter>ソース ファイル\Map\Goal</Filter>
+    </ClCompile>
+    <ClCompile Include="Fade.cpp">
+      <Filter>ソース ファイル\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>ソース ファイル\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI_Idle.cpp">
+      <Filter>ソース ファイル\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="MainInClear.cpp">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="MainInGameOver.cpp">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="sound.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectWrite.cpp">
+      <Filter>ソース ファイル\Core\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="DashBlockIdle.cpp">
+      <Filter>ソース ファイル\Map\DashBlock</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>ソース ファイル\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="XInput.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="BoxIdle.cpp">
+      <Filter>ソース ファイル\Obj\BOX</Filter>
+    </ClCompile>
+    <ClCompile Include="PushBox.cpp">
+      <Filter>ソース ファイル\Obj\Pushed</Filter>
+    </ClCompile>
+    <ClCompile Include="PushWoodBox.cpp">
+      <Filter>ソース ファイル\Obj\Pushed</Filter>
+    </ClCompile>
+    <ClCompile Include="WoodBoxIdle.cpp">
+      <Filter>ソース ファイル\Obj\BOX\WoodBox</Filter>
+    </ClCompile>
+    <ClCompile Include="ThornBlockIdle.cpp">
+      <Filter>ソース ファイル\Map\ThornBlock</Filter>
+    </ClCompile>
+    <ClCompile Include="BulletIdle.cpp">
+      <Filter>ソース ファイル\Enemmy\Bullet</Filter>
+    </ClCompile>
+    <ClCompile Include="BulletEnemmyIdle.cpp">
+      <Filter>ソース ファイル\Enemmy\Bullet</Filter>
+    </ClCompile>
+    <ClCompile Include="RockGeneraterIdle.cpp">
+      <Filter>ソース ファイル\Enemmy\Rock</Filter>
+    </ClCompile>
+    <ClCompile Include="RockIdle.cpp">
+      <Filter>ソース ファイル\Enemmy\Rock</Filter>
+    </ClCompile>
+    <ClCompile Include="BreakBlockIdle.cpp">
+      <Filter>ソース ファイル\Map\BreakBlock</Filter>
+    </ClCompile>
+    <ClCompile Include="PermationBlockIdle.cpp">
+      <Filter>ソース ファイル\Map\LandBlock</Filter>
+    </ClCompile>
+    <ClCompile Include="StarCoinIdle.cpp">
+      <Filter>ソース ファイル\Obj\StarCoin</Filter>
+    </ClCompile>
+    <ClCompile Include="Input.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="MainInStageSelect.cpp">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="OneEyeEnemy.cpp">
+      <Filter>ソース ファイル\Enemmy\OneEye</Filter>
+    </ClCompile>
+    <ClCompile Include="OneEyeEnemyIdle.cpp">
+      <Filter>ソース ファイル\Enemmy\OneEye</Filter>
+    </ClCompile>
+    <ClCompile Include="TrampolineBlockIdle.cpp">
+      <Filter>ソース ファイル\Obj\Tranpoline</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="StateMachineBase.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="StateBase.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="renderer.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="sprite.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerGame.h">
+      <Filter>ソース ファイル\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>ソース ファイル\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockMap.h">
+      <Filter>ソース ファイル\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>ソース ファイル\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="MainInGame.h">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="MainTitle.h">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>ソース ファイル\Core\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform2D.h">
+      <Filter>ソース ファイル\Core\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>ソース ファイル\Core\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="LandBlock.h">
+      <Filter>ソース ファイル\Map\LandBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="LandBlockIdle.h">
+      <Filter>ソース ファイル\Map\LandBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="Colider2D.h">
+      <Filter>ソース ファイル\Core\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="OnGameData.h">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Goal.h">
+      <Filter>ソース ファイル\Map\Goal</Filter>
+    </ClInclude>
+    <ClInclude Include="GoalIdle.h">
+      <Filter>ソース ファイル\Map\Goal</Filter>
+    </ClInclude>
+    <ClInclude Include="Fade.h">
+      <Filter>ソース ファイル\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>ソース ファイル\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI_Idle.h">
+      <Filter>ソース ファイル\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="MainInClear.h">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="MainInGameOver.h">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="sound.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectWrite.h">
+      <Filter>ソース ファイル\Core\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="DashBlock.h">
+      <Filter>ソース ファイル\Map\DashBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="DashBlockIdle.h">
+      <Filter>ソース ファイル\Map\DashBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>ソース ファイル\Core\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectPool.h">
+      <Filter>ソース ファイル\Core\ObjectCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentPool.h">
+      <Filter>ソース ファイル\Core\ObjectCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="ColiderPool.h">
+      <Filter>ソース ファイル\Core\ObjectCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="XInput.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Box.h">
+      <Filter>ソース ファイル\Obj\BOX</Filter>
+    </ClInclude>
+    <ClInclude Include="BoxIdle.h">
+      <Filter>ソース ファイル\Obj\BOX</Filter>
+    </ClInclude>
+    <ClInclude Include="Pushed.h">
+      <Filter>ソース ファイル\Obj\Pushed</Filter>
+    </ClInclude>
+    <ClInclude Include="PushBox.h">
+      <Filter>ソース ファイル\Obj\Pushed</Filter>
+    </ClInclude>
+    <ClInclude Include="WoodBox.h">
+      <Filter>ソース ファイル\Obj\BOX\WoodBox</Filter>
+    </ClInclude>
+    <ClInclude Include="PushWoodBox.h">
+      <Filter>ソース ファイル\Obj\Pushed</Filter>
+    </ClInclude>
+    <ClInclude Include="WoodBoxIdle.h">
+      <Filter>ソース ファイル\Obj\BOX\WoodBox</Filter>
+    </ClInclude>
+    <ClInclude Include="ThornBlock.h">
+      <Filter>ソース ファイル\Map\ThornBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="Bullet.h">
+      <Filter>ソース ファイル\Enemmy\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="BulletIdle.h">
+      <Filter>ソース ファイル\Enemmy\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="BulletEnemmyIdle.h">
+      <Filter>ソース ファイル\Enemmy\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="BulletEnemmy.h">
+      <Filter>ソース ファイル\Enemmy\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="RockGenerater.h">
+      <Filter>ソース ファイル\Enemmy\Rock</Filter>
+    </ClInclude>
+    <ClInclude Include="RockGeneraterIdle.h">
+      <Filter>ソース ファイル\Enemmy\Rock</Filter>
+    </ClInclude>
+    <ClInclude Include="ThornBlockIdle.h">
+      <Filter>ソース ファイル\Map\ThornBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="RockIdle.h">
+      <Filter>ソース ファイル\Enemmy\Rock</Filter>
+    </ClInclude>
+    <ClInclude Include="Rock.h">
+      <Filter>ソース ファイル\Enemmy\Rock</Filter>
+    </ClInclude>
+    <ClInclude Include="BreakBlock.h">
+      <Filter>ソース ファイル\Map\BreakBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="BreakBlockIdle.h">
+      <Filter>ソース ファイル\Map\BreakBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="Break.h">
+      <Filter>ソース ファイル\Map\Break</Filter>
+    </ClInclude>
+    <ClInclude Include="PermationBlock.h">
+      <Filter>ソース ファイル\Map\LandBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="PermationBlockIdle.h">
+      <Filter>ソース ファイル\Map\LandBlock</Filter>
+    </ClInclude>
+    <ClInclude Include="StarCoin.h">
+      <Filter>ソース ファイル\Obj\StarCoin</Filter>
+    </ClInclude>
+    <ClInclude Include="StarCoinIdle.h">
+      <Filter>ソース ファイル\Obj\StarCoin</Filter>
+    </ClInclude>
+    <ClInclude Include="Damaged.h">
+      <Filter>ソース ファイル\Player\Damaged</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemmy.h">
+      <Filter>ソース ファイル\Enemmy</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="MainInStageSelect.h">
+      <Filter>ソース ファイル\Main</Filter>
+    </ClInclude>
+    <ClInclude Include="OneEyeEnemy.h">
+      <Filter>ソース ファイル\Enemmy\OneEye</Filter>
+    </ClInclude>
+    <ClInclude Include="OneEyeEnemyIdle.h">
+      <Filter>ソース ファイル\Enemmy\OneEye</Filter>
+    </ClInclude>
+    <ClInclude Include="TrampolineBlock.h">
+      <Filter>ソース ファイル\Obj\Tranpoline</Filter>
+    </ClInclude>
+    <ClInclude Include="TrampolineBlockIdle.h">
+      <Filter>ソース ファイル\Obj\Tranpoline</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
